@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SRT字幕自動生成ツール</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <h1>SRT字幕自動生成ツール</h1>
+    <p>WAV音声と台本テキストから、Cloudflare Pagesで動作する静的Webアプリで字幕ファイルを生成します。</p>
+  </header>
+
+  <main class="container">
+    <section class="card" aria-labelledby="overview-title">
+      <h2 id="overview-title">プロジェクト概要</h2>
+      <p>
+        音声ファイル（<code>.wav</code>）と対応するテキスト（<code>.txt</code>）をまとめて読み込み、
+        時間情報を解析しながら標準的なSRT形式で字幕を生成します。Pythonスクリプトの機能をWebブラウザ上に再現し、
+        現場の微調整ニーズに応えられるよう設計しました。
+      </p>
+      <ul class="feature-list">
+        <li>同名の <code>.txt</code> / <code>.wav</code> ペアから字幕生成</li>
+        <li>ブラウザで音声長を解析し、自動でタイムコードを設定</li>
+        <li>固定秒数の手動調整、または目標合計時間に合わせる自動調整</li>
+        <li>四捨五入誤差を抑えたミリ秒精度の時間フォーマット</li>
+      </ul>
+    </section>
+
+    <section class="card" aria-labelledby="input-title">
+      <h2 id="input-title">1. ファイルを読み込む</h2>
+      <p>フォルダごと、またはファイルを複数選択して読み込めます。WAVとTXTは同じファイル名にしてください。</p>
+      <div class="input-group">
+        <label class="file-picker">
+          <span>フォルダを選択</span>
+          <input type="file" id="directoryInput" webkitdirectory directory multiple />
+        </label>
+        <span class="input-separator">または</span>
+        <label class="file-picker">
+          <span>ファイルを選択</span>
+          <input type="file" id="fileInput" multiple accept=".wav,.txt" />
+        </label>
+      </div>
+      <p class="hint">選択したファイルはローカルでのみ処理され、アップロードは行われません。</p>
+    </section>
+
+    <section class="card" aria-labelledby="settings-title">
+      <h2 id="settings-title">2. 調整設定</h2>
+      <fieldset class="mode-selector">
+        <legend>調整モード</legend>
+        <label>
+          <input type="radio" name="mode" value="none" checked /> 調整なし
+        </label>
+        <label>
+          <input type="radio" name="mode" value="manual" /> 手動調整（各字幕に固定値を加算）
+        </label>
+        <label>
+          <input type="radio" name="mode" value="auto" /> 自動調整（目標合計時間に揃える）
+        </label>
+      </fieldset>
+
+      <div class="mode-fields" data-mode="manual">
+        <label for="manualAdjustment">手動調整値（秒）</label>
+        <input type="number" id="manualAdjustment" step="0.01" value="0.02" />
+      </div>
+
+      <div class="mode-fields" data-mode="auto">
+        <label for="targetTime">目標の合計時間（秒）</label>
+        <input type="number" id="targetTime" step="0.1" value="60" />
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="generate-title">
+      <h2 id="generate-title">3. 字幕を生成</h2>
+      <button id="generateBtn" class="primary">SRTファイルを生成</button>
+      <div id="status" role="status" aria-live="polite"></div>
+      <div id="summary" class="summary" hidden></div>
+    </section>
+
+    <section class="card" aria-labelledby="usecases-title">
+      <h2 id="usecases-title">想定ユースケース</h2>
+      <ul>
+        <li>ナレーション付き動画の字幕作成</li>
+        <li>ポッドキャストやボイスドラマのテロップ生成</li>
+        <li>短編動画や展示用音声ガイドの字幕</li>
+      </ul>
+    </section>
+
+    <section class="card" aria-labelledby="future-title">
+      <h2 id="future-title">今後の拡張アイデア</h2>
+      <ul>
+        <li>字幕ごとの個別微調整値の指定</li>
+        <li>音声認識（ASR）との連携による台本自動生成</li>
+        <li>話速やポーズを考慮した区切り検出</li>
+        <li>Premiere Pro / Final Cut 用XMLの書き出し</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>&copy; 2024 SRT Generator from Voievox</small>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
