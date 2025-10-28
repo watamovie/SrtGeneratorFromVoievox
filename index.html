@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SRT字幕自動生成ツール</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <h1>SRT字幕自動生成ツール</h1>
+        <p>
+          音声ファイルと台本テキストから、動画編集に使えるSRT字幕ファイルをブラウザ上で生成します。
+          Cloudflare Pagesなどの静的ホスティングに対応した、完全クライアントサイドアプリです。
+        </p>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h2>1. 素材を読み込む</h2>
+        <p>
+          <strong>同名の</strong> <code>.wav</code> と <code>.txt</code> ファイルのペアをすべて選択してください。
+          フォルダをまとめて選択する場合は「フォルダ選択」ボタンをご利用ください。
+        </p>
+        <div class="inputs">
+          <label class="file-input">
+            <span>フォルダを読み込む</span>
+            <input type="file" id="folderInput" webkitdirectory multiple />
+          </label>
+          <label class="file-input">
+            <span>個別ファイルを読み込む</span>
+            <input type="file" id="fileInput" multiple accept=".wav,.txt" />
+          </label>
+        </div>
+        <p class="hint">
+          例：<code>001.wav</code> と <code>001.txt</code> のように同名ファイルで揃えてください。
+        </p>
+        <div id="fileStatus" class="status" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>2. 調整方法を選ぶ</h2>
+        <form id="settingsForm" class="settings">
+          <fieldset>
+            <legend>調整モード</legend>
+            <label class="radio">
+              <input type="radio" name="mode" value="manual" />
+              <span>手動調整：全てのクリップに一定値を加算</span>
+            </label>
+            <div class="setting-group" data-setting="manual">
+              <label>
+                調整値（秒）
+                <input type="number" step="0.01" id="manualAdjustment" value="0" />
+              </label>
+            </div>
+
+            <label class="radio">
+              <input type="radio" name="mode" value="auto" checked />
+              <span>自動調整：全体の目標時間に合わせて配分</span>
+            </label>
+            <div class="setting-group active" data-setting="auto">
+              <label>
+                目標合計時間（秒）
+                <input type="number" step="0.1" id="targetTotalTime" placeholder="例：60" />
+              </label>
+            </div>
+          </fieldset>
+          <button type="submit" class="primary" id="generateBtn" disabled>
+            SRTを生成する
+          </button>
+        </form>
+      </section>
+
+      <section class="card" id="summaryCard" hidden>
+        <h2>3. 結果とダウンロード</h2>
+        <div id="summary"></div>
+        <button id="downloadBtn" class="primary" disabled>
+          SRTファイルをダウンロード
+        </button>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        想定ユースケース：ナレーション付き動画、ボイスドラマ、展示音声ガイドなどの字幕生成。
+        今後の拡張案や改善のご提案もお待ちしています。
+      </p>
+    </footer>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
