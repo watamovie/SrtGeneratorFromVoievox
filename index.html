@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SRT字幕自動生成ツール</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>SRT字幕自動生成ツール</h1>
+      <p>
+        音声ファイルと台本テキストから、Cloudflare Pagesでホストできる静的WebアプリとしてSRT字幕を生成します。
+      </p>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>使い方</h2>
+        <ol>
+          <li>
+            <strong>wav</strong>と<strong>txt</strong>ファイルを同じファイル名でペアにして、まとめて選択またはフォルダごと読み込みます。
+          </li>
+          <li>
+            調整モードを選び、必要に応じて数値を入力します。
+          </li>
+          <li>「SRTを生成」ボタンを押して、出力されたファイルをダウンロードします。</li>
+        </ol>
+        <p class="hint">
+          ブラウザによってはフォルダ選択に対応していないことがあります。その場合は全ファイルをまとめて選択してください。
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>ファイルの読み込み</h2>
+        <div class="uploader">
+          <label class="file-input-label">
+            <span>ファイルを選択</span>
+            <input id="file-input" type="file" accept=".txt,.wav" multiple webkitdirectory />
+          </label>
+          <div id="drop-zone" class="drop-zone" tabindex="0">
+            ここにファイルやフォルダをドラッグ＆ドロップ
+          </div>
+        </div>
+        <div id="file-summary" class="file-summary" hidden></div>
+      </section>
+
+      <section class="card">
+        <h2>調整モード</h2>
+        <form id="options-form" class="options">
+          <label class="option">
+            <input type="radio" name="mode" value="none" checked />
+            <span>調整なし（録音時間のまま）</span>
+          </label>
+          <label class="option">
+            <input type="radio" name="mode" value="manual" />
+            <span>
+              手動調整：各クリップに
+              <input
+                id="manual-adjustment"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                placeholder="例: 0.02"
+                disabled
+              />
+              秒を加算
+            </span>
+          </label>
+          <label class="option">
+            <input type="radio" name="mode" value="auto" />
+            <span>
+              自動調整：全体の目標時間を
+              <input
+                id="target-total-time"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                placeholder="例: 60"
+                disabled
+              />
+              秒に合わせる
+            </span>
+          </label>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>生成</h2>
+        <button id="generate-btn" class="primary" disabled>SRTを生成</button>
+        <div id="status" class="status" role="status"></div>
+        <textarea id="preview" class="preview" rows="12" readonly hidden></textarea>
+        <a id="download-link" class="download" hidden download="output.srt">SRTをダウンロード</a>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>
+        🎯 目的：音声ファイルと台本を組み合わせ、タイミングを調整しながらSRT字幕を自動生成します。
+      </p>
+      <p>
+        💡 ヒント：目標時間に合わせた自動調整や、固定値の手動調整を用意しています。今後は個別補正やASR連携などの拡張も視野に入っています。
+      </p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
