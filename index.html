@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voievox SRT ジェネレーター</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>SRT字幕自動生成ツール</h1>
+      <p class="lead">
+        音声（.wav）とテキスト（.txt）のペアから、全体時間に合わせてSRT字幕を生成します。
+      </p>
+    </header>
+
+    <main class="app-main">
+      <section class="card">
+        <h2>1. ファイルを読み込む</h2>
+        <p>
+          フォルダをまとめて読み込む場合は「フォルダ選択」、個別に指定する場合は複数ファイルを選択してください。
+        </p>
+        <div class="input-group">
+          <label for="folderInput" class="button button-secondary">
+            フォルダを選択
+            <input id="folderInput" type="file" webkitdirectory directory multiple />
+          </label>
+          <span class="input-separator">または</span>
+          <label for="fileInput" class="button button-secondary">
+            ファイルを選択
+            <input id="fileInput" type="file" multiple accept=".wav,.txt" />
+          </label>
+        </div>
+        <p class="hint">
+          選択されたファイルはブラウザ上でのみ処理され、サーバーにはアップロードされません。
+        </p>
+        <div id="selectedFiles" class="selected-files" aria-live="polite"></div>
+      </section>
+
+      <section class="card">
+        <h2>2. タイミング調整モード</h2>
+        <form id="settingsForm" class="settings-form">
+          <fieldset>
+            <legend>モード選択</legend>
+            <label class="radio">
+              <input type="radio" name="mode" value="manual" checked />
+              <span>手動調整（全字幕に固定値を加算）</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="mode" value="auto" />
+              <span>自動調整（目標合計時間に合わせる）</span>
+            </label>
+          </fieldset>
+
+          <div class="mode-settings" data-mode="manual">
+            <label for="manualAdjustment">1クリップあたりの加算秒数</label>
+            <input
+              type="number"
+              id="manualAdjustment"
+              name="manualAdjustment"
+              step="0.01"
+              value="0"
+              min="-5"
+              max="5"
+            />
+            <p class="hint">例: 0.02 と指定すると、すべての字幕が0.02秒ずつ伸びます。</p>
+          </div>
+
+          <div class="mode-settings hidden" data-mode="auto">
+            <label for="targetTotalTime">目標の合計時間（秒）</label>
+            <input
+              type="number"
+              id="targetTotalTime"
+              name="targetTotalTime"
+              step="0.1"
+              min="0"
+              value="60"
+              required
+            />
+            <p class="hint">選択した音声の合計時間に合わせて、均等に微調整します。</p>
+          </div>
+
+          <button type="submit" class="button button-primary">SRTを生成</button>
+        </form>
+      </section>
+
+      <section class="card" id="results" hidden>
+        <h2>3. 結果</h2>
+        <div class="result-grid">
+          <div>
+            <h3>統計</h3>
+            <dl class="stats">
+              <div>
+                <dt>クリップ数</dt>
+                <dd id="clipCount">0</dd>
+              </div>
+              <div>
+                <dt>元の合計時間</dt>
+                <dd id="originalTotal">0.00 秒</dd>
+              </div>
+              <div>
+                <dt>適用調整値</dt>
+                <dd id="adjustment">0.0000 秒</dd>
+              </div>
+              <div class="auto-only">
+                <dt>目標合計時間</dt>
+                <dd id="targetTotal">-</dd>
+              </div>
+            </dl>
+          </div>
+          <div>
+            <h3>ログ</h3>
+            <pre id="log" class="log"></pre>
+          </div>
+        </div>
+        <a id="downloadLink" class="button button-primary" download="output.srt">SRTファイルをダウンロード</a>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>
+        同名の <code>.wav</code> と <code>.txt</code> ファイルをペアにして処理します。ファイル名は自動的に昇順で並び替えられます。
+      </p>
+    </footer>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
