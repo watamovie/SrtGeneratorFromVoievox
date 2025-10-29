@@ -12,6 +12,7 @@ const downloadLink = document.getElementById("downloadLink");
 const frameToggle = document.getElementById("enableFrameLock");
 const frameRateOptionsEl = document.getElementById("frameRateOptions");
 const frameRateInput = document.getElementById("frameRate");
+const trimFrameOverflowInput = document.getElementById("trimFrameOverflow");
 const frameRateStatEl = document.getElementById("frameRateStat");
 const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
 const frameDriftEl = document.getElementById("frameDrift");
@@ -27,6 +28,9 @@ if (frameToggle && frameRateOptionsEl && frameRateInput) {
     const enabled = frameToggle.checked;
     frameRateOptionsEl.classList.toggle("hidden", !enabled);
     frameRateInput.disabled = !enabled;
+    if (trimFrameOverflowInput) {
+      trimFrameOverflowInput.disabled = !enabled;
+    }
   };
 
   syncFrameOptionsVisibility();
@@ -100,6 +104,8 @@ settingsForm.addEventListener("submit", async (event) => {
     const targetTotalTime = parseFloat(settingsForm.elements["targetTotalTime"].value || "0");
     const frameLockEnabled = settingsForm.elements["enableFrameLock"]?.checked ?? false;
     const frameRateValue = parseFloat(settingsForm.elements["frameRate"]?.value || "0");
+    const trimFrameOverflow =
+      settingsForm.elements["trimFrameOverflow"]?.checked ?? false;
 
     if (frameLockEnabled && !(frameRateValue > 0)) {
       alert("フレームレートには 0 より大きい数値を指定してください。");
@@ -114,6 +120,7 @@ settingsForm.addEventListener("submit", async (event) => {
       frameOptions: {
         enabled: frameLockEnabled,
         frameRate: frameRateValue,
+        trimOverflow: trimFrameOverflow,
       },
     });
 
@@ -232,6 +239,7 @@ async function processPairs({
   const frameRateEnabled =
     frameOptions?.enabled && Number.isFinite(frameOptions.frameRate) && frameOptions.frameRate > 0;
   const frameRate = frameRateEnabled ? frameOptions.frameRate : null;
+  const trimOverflow = frameRateEnabled && Boolean(frameOptions?.trimOverflow);
 
   let rawTimeline = 0;
   let quantizedTimeline = 0;
@@ -250,10 +258,16 @@ async function processPairs({
     let framesUsed = null;
 
     if (frameRateEnabled) {
-      const minFrames = adjustedDuration > 0 ? 1 : 0;
-      const roundedFrames = Math.round(adjustedDuration * frameRate);
-      framesUsed = Math.max(roundedFrames, minFrames);
       const startFrame = currentFrame;
+      const rawFrames = adjustedDuration * frameRate;
+      if (trimOverflow) {
+        const flooredFrames = Math.floor(rawFrames + 1e-9);
+        framesUsed = Math.max(flooredFrames, 0);
+      } else {
+        const minFrames = adjustedDuration > 0 ? 1 : 0;
+        const roundedFrames = Math.round(rawFrames);
+        framesUsed = Math.max(roundedFrames, minFrames);
+      }
       const endFrame = startFrame + framesUsed;
       startSeconds = startFrame / frameRate;
       endSeconds = endFrame / frameRate;
@@ -303,6 +317,9 @@ async function processPairs({
       `出力された合計時間: ${quantizedTimeline.toFixed(3)} 秒`,
       `累積のずれ: ${formatSigned(timelineDrift, 6)} 秒`
     );
+    if (trimOverflow) {
+      log.push("(フレームからはみ出した余剰時間を切り捨て設定が有効)");
+    }
   }
 
   return {
@@ -317,6 +334,7 @@ async function processPairs({
       frameRate,
       total: quantizedTimeline,
       drift: timelineDrift,
+      trimOverflow,
     },
   };
 }
