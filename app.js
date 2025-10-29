@@ -12,6 +12,7 @@ const downloadLink = document.getElementById("downloadLink");
 const frameToggle = document.getElementById("enableFrameLock");
 const frameRateOptionsEl = document.getElementById("frameRateOptions");
 const frameRateInput = document.getElementById("frameRate");
+const frameTrimToggle = document.getElementById("frameTrimOverflow");
 const frameRateStatEl = document.getElementById("frameRateStat");
 const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
 const frameDriftEl = document.getElementById("frameDrift");
@@ -27,6 +28,9 @@ if (frameToggle && frameRateOptionsEl && frameRateInput) {
     const enabled = frameToggle.checked;
     frameRateOptionsEl.classList.toggle("hidden", !enabled);
     frameRateInput.disabled = !enabled;
+    if (frameTrimToggle) {
+      frameTrimToggle.disabled = !enabled;
+    }
   };
 
   syncFrameOptionsVisibility();
@@ -100,6 +104,7 @@ settingsForm.addEventListener("submit", async (event) => {
     const targetTotalTime = parseFloat(settingsForm.elements["targetTotalTime"].value || "0");
     const frameLockEnabled = settingsForm.elements["enableFrameLock"]?.checked ?? false;
     const frameRateValue = parseFloat(settingsForm.elements["frameRate"]?.value || "0");
+    const trimOverflow = settingsForm.elements["frameTrimOverflow"]?.checked ?? false;
 
     if (frameLockEnabled && !(frameRateValue > 0)) {
       alert("フレームレートには 0 より大きい数値を指定してください。");
@@ -114,6 +119,7 @@ settingsForm.addEventListener("submit", async (event) => {
       frameOptions: {
         enabled: frameLockEnabled,
         frameRate: frameRateValue,
+        trimOverflow,
       },
     });
 
@@ -250,9 +256,13 @@ async function processPairs({
     let framesUsed = null;
 
     if (frameRateEnabled) {
-      const minFrames = adjustedDuration > 0 ? 1 : 0;
-      const roundedFrames = Math.round(adjustedDuration * frameRate);
-      framesUsed = Math.max(roundedFrames, minFrames);
+      const trimOverflowEnabled = Boolean(frameOptions?.trimOverflow);
+      const minFrames = trimOverflowEnabled ? 0 : adjustedDuration > 0 ? 1 : 0;
+      const scaledFrames = adjustedDuration * frameRate;
+      const quantizedFrames = trimOverflowEnabled
+        ? Math.floor(scaledFrames)
+        : Math.round(scaledFrames);
+      framesUsed = Math.max(quantizedFrames, minFrames);
       const startFrame = currentFrame;
       const endFrame = startFrame + framesUsed;
       startSeconds = startFrame / frameRate;
