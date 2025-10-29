@@ -161,7 +161,8 @@ legend {
   margin: 0.5rem 0;
 }
 
-.mode-settings {
+.mode-settings,
+.frame-settings {
   display: grid;
   gap: 0.5rem;
 }
@@ -170,12 +171,16 @@ legend {
   display: none;
 }
 
-.mode-settings input[type="number"] {
+.settings-form input[type="number"] {
   padding: 0.75rem;
   border-radius: 0.6rem;
   border: 1px solid var(--border);
   background: rgba(15, 23, 42, 0.4);
   color: var(--text);
+}
+
+.frame-only {
+  display: none;
 }
 
 #results h3 {

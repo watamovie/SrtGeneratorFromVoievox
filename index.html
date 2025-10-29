@@ -80,6 +80,22 @@
             <p class="hint">選択した音声の合計時間に合わせて、均等に微調整します。</p>
           </div>
 
+          <div class="frame-settings">
+            <label for="frameRate">フレームレート補正（任意）</label>
+            <input
+              type="number"
+              id="frameRate"
+              name="frameRate"
+              step="0.001"
+              min="1"
+              max="240"
+              placeholder="例: 29.97"
+            />
+            <p class="hint">
+              SRTのタイムスタンプを指定したフレーム単位に揃え、動画編集ソフトでのズレを軽減します。
+            </p>
+          </div>
+
           <button type="submit" class="button button-primary">SRTを生成</button>
         </form>
       </section>
@@ -105,6 +121,18 @@
               <div class="auto-only">
                 <dt>目標合計時間</dt>
                 <dd id="targetTotal">-</dd>
+              </div>
+              <div class="frame-only">
+                <dt>フレームレート補正</dt>
+                <dd id="frameRateInfo">未使用</dd>
+              </div>
+              <div class="frame-only">
+                <dt>補正後の合計時間</dt>
+                <dd id="quantizedTotal">-</dd>
+              </div>
+              <div class="frame-only">
+                <dt>補正差分</dt>
+                <dd id="frameDrift">-</dd>
               </div>
             </dl>
           </div>
