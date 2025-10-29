@@ -7,8 +7,12 @@ const clipCountEl = document.getElementById("clipCount");
 const originalTotalEl = document.getElementById("originalTotal");
 const adjustmentEl = document.getElementById("adjustment");
 const targetTotalEl = document.getElementById("targetTotal");
+const frameRateInfoEl = document.getElementById("frameRateInfo");
+const quantizedTotalEl = document.getElementById("quantizedTotal");
+const frameDriftEl = document.getElementById("frameDrift");
 const logEl = document.getElementById("log");
 const downloadLink = document.getElementById("downloadLink");
+const frameOnlyElements = document.querySelectorAll(".frame-only");
 
 let storedFiles = [];
 let currentDownloadUrl = null;
@@ -81,12 +85,24 @@ settingsForm.addEventListener("submit", async (event) => {
     const mode = settingsForm.elements["mode"].value;
     const manualAdjustment = parseFloat(settingsForm.elements["manualAdjustment"].value || "0");
     const targetTotalTime = parseFloat(settingsForm.elements["targetTotalTime"].value || "0");
+    const frameRateInput = settingsForm.elements["frameRate"].value?.trim();
+
+    let frameRate = null;
+    if (frameRateInput) {
+      const parsedFrameRate = Number(frameRateInput);
+      if (!Number.isFinite(parsedFrameRate) || parsedFrameRate <= 0) {
+        alert("フレームレートには正の数値を入力してください。");
+        return;
+      }
+      frameRate = parsedFrameRate;
+    }
 
     const processingResult = await processPairs({
       pairs,
       mode,
       manualAdjustment,
       targetTotalTime,
+      frameRate,
     });
 
     showResults({ ...processingResult, warnings }, mode);
@@ -174,7 +190,12 @@ function formatTime(seconds) {
   return `${pad(hours)}:${pad(minutes)}:${pad(secs)},${pad(milliseconds, 3)}`;
 }
 
-async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) {
+function formatFps(value) {
+  const fixed = value.toFixed(3);
+  return fixed.replace(/\.0+$/, "").replace(/\.(\d*[1-9])0+$/, ".$1");
+}
+
+async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime, frameRate }) {
   const durations = pairs.map((pair) => pair.duration);
   const originalTotal = durations.reduce((sum, value) => sum + value, 0);
 
@@ -190,31 +211,69 @@ async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) 
     adjustment = clipCount ? (targetTotalTime - originalTotal) / clipCount : 0;
   }
 
+  const adjustedDurations = pairs.map((pair) => Math.max(pair.duration + adjustment, 0));
+  const intendedTotal = adjustedDurations.reduce((sum, value) => sum + value, 0);
+
+  const useFrameSnap = typeof frameRate === "number" && frameRate > 0;
+  const frameDuration = useFrameSnap ? 1 / frameRate : null;
+
   let currentTime = 0;
+  let currentFrame = 0;
   const lines = [];
   const log = [];
 
   pairs.forEach((pair, index) => {
-    const adjustedDuration = Math.max(pair.duration + adjustment, 0);
-    const startTime = formatTime(currentTime);
-    const endTime = formatTime(currentTime + adjustedDuration);
+    const adjustedDuration = adjustedDurations[index];
+
+    let startSeconds = currentTime;
+    let endSeconds = currentTime + adjustedDuration;
+    let finalDuration = adjustedDuration;
+    let durationFrames = null;
+
+    if (useFrameSnap && frameDuration) {
+      const startFrame = currentFrame;
+      durationFrames = adjustedDuration <= 0 ? 0 : Math.max(1, Math.round(adjustedDuration / frameDuration));
+      const endFrame = startFrame + durationFrames;
+      startSeconds = startFrame * frameDuration;
+      endSeconds = endFrame * frameDuration;
+      finalDuration = endSeconds - startSeconds;
+      currentFrame = endFrame;
+      currentTime = endSeconds;
+    } else {
+      currentTime = endSeconds;
+    }
+
+    const startTime = formatTime(startSeconds);
+    const endTime = formatTime(endSeconds);
 
     lines.push(`${index + 1}\n${startTime} --> ${endTime}\n${pair.dialogue}\n`);
 
-    log.push(
-      `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${adjustedDuration.toFixed(3)}s`
-    );
+    let entry = `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${finalDuration.toFixed(3)}s`;
 
-    currentTime += adjustedDuration;
+    if (useFrameSnap && durationFrames !== null) {
+      const diff = finalDuration - adjustedDuration;
+      const diffMs = Math.abs(diff * 1000);
+      const diffText = diffMs >= 0.5 ? `, Δ${diff >= 0 ? "+" : ""}${diff.toFixed(3)}s` : "";
+      entry += ` (${durationFrames}f${diffText})`;
+    }
+
+    log.push(entry);
   });
 
   const srtContent = lines.join("\n");
+
+  const quantizedTotal = useFrameSnap ? currentTime : intendedTotal;
+  const frameDrift = useFrameSnap ? quantizedTotal - intendedTotal : 0;
 
   return {
     clipCount: pairs.length,
     originalTotal,
     adjustment,
     targetTotal,
+    intendedTotal,
+    quantizedTotal,
+    frameRate: useFrameSnap ? frameRate : null,
+    frameDrift,
     srtContent,
     log,
   };
@@ -231,7 +290,28 @@ function showResults(result, mode) {
     targetTotalEl.textContent = "-";
   }
 
+  if (result.frameRate) {
+    frameOnlyElements.forEach((el) => (el.style.display = ""));
+    const formattedFps = formatFps(result.frameRate);
+    frameRateInfoEl.textContent = `${formattedFps} fps`;
+    quantizedTotalEl.textContent = `${result.quantizedTotal.toFixed(3)} 秒`;
+    const drift = result.frameDrift ?? 0;
+    const driftText = `${drift >= 0 ? "+" : ""}${drift.toFixed(3)} 秒`;
+    frameDriftEl.textContent = driftText;
+  } else {
+    frameOnlyElements.forEach((el) => (el.style.display = "none"));
+    frameRateInfoEl.textContent = "未使用";
+    quantizedTotalEl.textContent = "-";
+    frameDriftEl.textContent = "-";
+  }
+
   const messages = [...result.log];
+  if (result.frameRate) {
+    const drift = result.frameDrift ?? 0;
+    const formattedFps = formatFps(result.frameRate);
+    const driftText = `${drift >= 0 ? "+" : ""}${drift.toFixed(3)} 秒`;
+    messages.unshift(`▶ フレーム補正 ${formattedFps} fps（差分 ${driftText}）`);
+  }
   if (result.warnings?.length) {
     messages.push("\n⚠️ 警告:");
     messages.push(...result.warnings.map((warning) => `- ${warning}`));
