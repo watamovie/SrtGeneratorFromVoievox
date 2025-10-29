@@ -80,6 +80,29 @@
             <p class="hint">選択した音声の合計時間に合わせて、均等に微調整します。</p>
           </div>
 
+          <div class="frame-rate-settings">
+            <label class="checkbox">
+              <input type="checkbox" id="enableFrameSnap" name="enableFrameSnap" />
+              <span>動画編集ソフトのフレームレートに合わせてタイムコードを揃える</span>
+            </label>
+            <div id="frameRateFields" class="frame-rate-fields hidden">
+              <label for="frameRate">フレームレート</label>
+              <select id="frameRate" name="frameRate">
+                <option value="23.976">23.976 fps (映画/配信)</option>
+                <option value="24">24 fps</option>
+                <option value="25">25 fps (PAL)</option>
+                <option value="29.97">29.97 fps (NTSC)</option>
+                <option value="30">30 fps</option>
+                <option value="50">50 fps</option>
+                <option value="59.94">59.94 fps</option>
+                <option value="60">60 fps</option>
+              </select>
+              <p class="hint">
+                SRTの開始・終了時刻を指定したフレーム境界にスナップして書き出します。動画編集ソフト側の丸め込みによるズレを抑制できます。
+              </p>
+            </div>
+          </div>
+
           <button type="submit" class="button button-primary">SRTを生成</button>
         </form>
       </section>
@@ -99,12 +122,20 @@
                 <dd id="originalTotal">0.00 秒</dd>
               </div>
               <div>
+                <dt>調整後合計時間</dt>
+                <dd id="adjustedTotal">0.00 秒</dd>
+              </div>
+              <div>
                 <dt>適用調整値</dt>
                 <dd id="adjustment">0.0000 秒</dd>
               </div>
               <div class="auto-only">
                 <dt>目標合計時間</dt>
                 <dd id="targetTotal">-</dd>
+              </div>
+              <div>
+                <dt>フレームレート揃え</dt>
+                <dd id="frameRateSummary">-</dd>
               </div>
             </dl>
           </div>
