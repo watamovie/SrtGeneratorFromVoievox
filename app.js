@@ -9,12 +9,29 @@ const adjustmentEl = document.getElementById("adjustment");
 const targetTotalEl = document.getElementById("targetTotal");
 const logEl = document.getElementById("log");
 const downloadLink = document.getElementById("downloadLink");
+const frameToggle = document.getElementById("enableFrameLock");
+const frameRateOptionsEl = document.getElementById("frameRateOptions");
+const frameRateInput = document.getElementById("frameRate");
+const frameRateStatEl = document.getElementById("frameRateStat");
+const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
+const frameDriftEl = document.getElementById("frameDrift");
 
 let storedFiles = [];
 let currentDownloadUrl = null;
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
+
+if (frameToggle && frameRateOptionsEl && frameRateInput) {
+  const syncFrameOptionsVisibility = () => {
+    const enabled = frameToggle.checked;
+    frameRateOptionsEl.classList.toggle("hidden", !enabled);
+    frameRateInput.disabled = !enabled;
+  };
+
+  syncFrameOptionsVisibility();
+  frameToggle.addEventListener("change", syncFrameOptionsVisibility);
+}
 
 function handleFileSelection(files) {
   storedFiles = Array.from(files);
@@ -81,12 +98,23 @@ settingsForm.addEventListener("submit", async (event) => {
     const mode = settingsForm.elements["mode"].value;
     const manualAdjustment = parseFloat(settingsForm.elements["manualAdjustment"].value || "0");
     const targetTotalTime = parseFloat(settingsForm.elements["targetTotalTime"].value || "0");
+    const frameLockEnabled = settingsForm.elements["enableFrameLock"]?.checked ?? false;
+    const frameRateValue = parseFloat(settingsForm.elements["frameRate"]?.value || "0");
+
+    if (frameLockEnabled && !(frameRateValue > 0)) {
+      alert("フレームレートには 0 より大きい数値を指定してください。");
+      return;
+    }
 
     const processingResult = await processPairs({
       pairs,
       mode,
       manualAdjustment,
       targetTotalTime,
+      frameOptions: {
+        enabled: frameLockEnabled,
+        frameRate: frameRateValue,
+      },
     });
 
     showResults({ ...processingResult, warnings }, mode);
@@ -174,7 +202,18 @@ function formatTime(seconds) {
   return `${pad(hours)}:${pad(minutes)}:${pad(secs)},${pad(milliseconds, 3)}`;
 }
 
-async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) {
+function formatSigned(value, decimals = 4) {
+  const fixed = value.toFixed(decimals);
+  return value >= 0 ? `+${fixed}` : fixed;
+}
+
+async function processPairs({
+  pairs,
+  mode,
+  manualAdjustment,
+  targetTotalTime,
+  frameOptions,
+}) {
   const durations = pairs.map((pair) => pair.duration);
   const originalTotal = durations.reduce((sum, value) => sum + value, 0);
 
@@ -190,25 +229,81 @@ async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) 
     adjustment = clipCount ? (targetTotalTime - originalTotal) / clipCount : 0;
   }
 
-  let currentTime = 0;
+  const frameRateEnabled =
+    frameOptions?.enabled && Number.isFinite(frameOptions.frameRate) && frameOptions.frameRate > 0;
+  const frameRate = frameRateEnabled ? frameOptions.frameRate : null;
+
+  let rawTimeline = 0;
+  let quantizedTimeline = 0;
+  let currentFrame = 0;
   const lines = [];
   const log = [];
 
   pairs.forEach((pair, index) => {
     const adjustedDuration = Math.max(pair.duration + adjustment, 0);
-    const startTime = formatTime(currentTime);
-    const endTime = formatTime(currentTime + adjustedDuration);
+    const originalEnd = rawTimeline + adjustedDuration;
+    rawTimeline = originalEnd;
+
+    let startSeconds;
+    let endSeconds;
+    let outputDuration = adjustedDuration;
+    let framesUsed = null;
+
+    if (frameRateEnabled) {
+      const minFrames = adjustedDuration > 0 ? 1 : 0;
+      const roundedFrames = Math.round(adjustedDuration * frameRate);
+      framesUsed = Math.max(roundedFrames, minFrames);
+      const startFrame = currentFrame;
+      const endFrame = startFrame + framesUsed;
+      startSeconds = startFrame / frameRate;
+      endSeconds = endFrame / frameRate;
+      outputDuration = endSeconds - startSeconds;
+      currentFrame = endFrame;
+      quantizedTimeline = endSeconds;
+    } else {
+      startSeconds = quantizedTimeline;
+      endSeconds = startSeconds + adjustedDuration;
+      outputDuration = adjustedDuration;
+      quantizedTimeline = endSeconds;
+    }
+
+    const startTime = formatTime(startSeconds);
+    const endTime = formatTime(endSeconds);
 
     lines.push(`${index + 1}\n${startTime} --> ${endTime}\n${pair.dialogue}\n`);
 
-    log.push(
-      `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${adjustedDuration.toFixed(3)}s`
-    );
+    const parts = [`原音 ${pair.duration.toFixed(3)}s`];
+    if (Math.abs(pair.duration - adjustedDuration) > 1e-6) {
+      parts.push(`調整後 ${adjustedDuration.toFixed(3)}s`);
+    }
+    parts.push(`出力 ${outputDuration.toFixed(3)}s`);
 
-    currentTime += adjustedDuration;
+    let entry = `${index + 1}. ${pair.baseName}.wav (${parts.join(", ")}`;
+
+    if (frameRateEnabled) {
+      const perClipDrift = outputDuration - adjustedDuration;
+      const cumulativeDrift = quantizedTimeline - rawTimeline;
+      entry += ` | ${framesUsed} frames | Δ=${formatSigned(perClipDrift)}s | 累積=${formatSigned(
+        cumulativeDrift
+      )}s`;
+    }
+
+    entry += `)`;
+    log.push(entry);
   });
 
   const srtContent = lines.join("\n");
+
+  const timelineDrift = quantizedTimeline - rawTimeline;
+
+  if (frameRateEnabled) {
+    log.push(
+      "",
+      `フレーム揃え: ${frameRate.toFixed(3)} fps`,
+      `出力された合計時間: ${quantizedTimeline.toFixed(3)} 秒`,
+      `累積のずれ: ${formatSigned(timelineDrift, 6)} 秒`
+    );
+  }
 
   return {
     clipCount: pairs.length,
@@ -217,6 +312,12 @@ async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) 
     targetTotal,
     srtContent,
     log,
+    frameLock: {
+      enabled: frameRateEnabled,
+      frameRate,
+      total: quantizedTimeline,
+      drift: timelineDrift,
+    },
   };
 }
 
@@ -229,6 +330,21 @@ function showResults(result, mode) {
     targetTotalEl.textContent = `${result.targetTotal.toFixed(2)} 秒`;
   } else {
     targetTotalEl.textContent = "-";
+  }
+
+  const frameLockEnabled = result.frameLock?.enabled;
+  document.querySelectorAll(".frame-only").forEach((el) => {
+    el.style.display = frameLockEnabled ? "flex" : "none";
+  });
+
+  if (frameLockEnabled && result.frameLock?.frameRate) {
+    frameRateStatEl.textContent = `${result.frameLock.frameRate.toFixed(3)} fps`;
+    frameAlignedTotalEl.textContent = `${result.frameLock.total.toFixed(3)} 秒`;
+    frameDriftEl.textContent = `${formatSigned(result.frameLock.drift, 4)} 秒`;
+  } else {
+    frameRateStatEl.textContent = "-";
+    frameAlignedTotalEl.textContent = "-";
+    frameDriftEl.textContent = "-";
   }
 
   const messages = [...result.log];

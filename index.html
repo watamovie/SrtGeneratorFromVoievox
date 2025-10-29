@@ -80,6 +80,27 @@
             <p class="hint">選択した音声の合計時間に合わせて、均等に微調整します。</p>
           </div>
 
+          <fieldset>
+            <legend>フレーム揃え</legend>
+            <label class="checkbox">
+              <input type="checkbox" id="enableFrameLock" name="enableFrameLock" />
+              <span>フレーム境界に合わせてタイムコードを丸める</span>
+            </label>
+            <div id="frameRateOptions" class="frame-rate-options hidden">
+              <label for="frameRate">使用するフレームレート (fps)</label>
+              <input
+                type="number"
+                id="frameRate"
+                name="frameRate"
+                step="0.001"
+                min="1"
+                max="240"
+                value="30"
+              />
+              <p class="hint">例: 29.97fps のタイムラインなら 29.97 と入力してください。</p>
+            </div>
+          </fieldset>
+
           <button type="submit" class="button button-primary">SRTを生成</button>
         </form>
       </section>
@@ -105,6 +126,18 @@
               <div class="auto-only">
                 <dt>目標合計時間</dt>
                 <dd id="targetTotal">-</dd>
+              </div>
+              <div class="frame-only">
+                <dt>使用フレームレート</dt>
+                <dd id="frameRateStat">-</dd>
+              </div>
+              <div class="frame-only">
+                <dt>フレーム揃え後の合計</dt>
+                <dd id="frameAlignedTotal">-</dd>
+              </div>
+              <div class="frame-only">
+                <dt>累積のずれ</dt>
+                <dd id="frameDrift">-</dd>
               </div>
             </dl>
           </div>
