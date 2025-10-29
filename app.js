@@ -7,14 +7,18 @@ const clipCountEl = document.getElementById("clipCount");
 const originalTotalEl = document.getElementById("originalTotal");
 const adjustmentEl = document.getElementById("adjustment");
 const targetTotalEl = document.getElementById("targetTotal");
+const finalTotalEl = document.getElementById("finalTotal");
 const logEl = document.getElementById("log");
 const downloadLink = document.getElementById("downloadLink");
+const alignToFramesInput = document.getElementById("alignToFrames");
+const frameRateInput = document.getElementById("frameRate");
 
 let storedFiles = [];
 let currentDownloadUrl = null;
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
+frameRateInput.disabled = !alignToFramesInput.checked;
 
 function handleFileSelection(files) {
   storedFiles = Array.from(files);
@@ -49,6 +53,10 @@ fileInput.addEventListener("change", (event) => {
   }
 });
 
+alignToFramesInput.addEventListener("change", () => {
+  frameRateInput.disabled = !alignToFramesInput.checked;
+});
+
 settingsForm.addEventListener("change", (event) => {
   if (event.target.name === "mode") {
     const mode = event.target.value;
@@ -81,12 +89,21 @@ settingsForm.addEventListener("submit", async (event) => {
     const mode = settingsForm.elements["mode"].value;
     const manualAdjustment = parseFloat(settingsForm.elements["manualAdjustment"].value || "0");
     const targetTotalTime = parseFloat(settingsForm.elements["targetTotalTime"].value || "0");
+    const alignToFrames = settingsForm.elements["alignToFrames"].checked;
+    const frameRateValue = parseFloat(settingsForm.elements["frameRate"].value || "0");
+
+    if (alignToFrames && (!Number.isFinite(frameRateValue) || frameRateValue <= 0)) {
+      alert("有効なフレームレートを入力してください。");
+      return;
+    }
 
     const processingResult = await processPairs({
       pairs,
       mode,
       manualAdjustment,
       targetTotalTime,
+      alignToFrames,
+      frameRate: alignToFrames ? frameRateValue : null,
     });
 
     showResults({ ...processingResult, warnings }, mode);
@@ -174,7 +191,14 @@ function formatTime(seconds) {
   return `${pad(hours)}:${pad(minutes)}:${pad(secs)},${pad(milliseconds, 3)}`;
 }
 
-async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) {
+async function processPairs({
+  pairs,
+  mode,
+  manualAdjustment,
+  targetTotalTime,
+  alignToFrames,
+  frameRate,
+}) {
   const durations = pairs.map((pair) => pair.duration);
   const originalTotal = durations.reduce((sum, value) => sum + value, 0);
 
@@ -190,31 +214,62 @@ async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) 
     adjustment = clipCount ? (targetTotalTime - originalTotal) / clipCount : 0;
   }
 
+  const frameDuration = alignToFrames && frameRate ? 1 / frameRate : null;
   let currentTime = 0;
+  let currentFrame = 0;
   const lines = [];
   const log = [];
 
   pairs.forEach((pair, index) => {
-    const adjustedDuration = Math.max(pair.duration + adjustment, 0);
-    const startTime = formatTime(currentTime);
-    const endTime = formatTime(currentTime + adjustedDuration);
+    const baseDuration = Math.max(pair.duration + adjustment, 0);
+    let startSeconds;
+    let endSeconds;
+    let effectiveDuration = baseDuration;
+    let frameCount = null;
+
+    if (frameDuration) {
+      frameCount = baseDuration > 0 ? Math.max(Math.round(baseDuration / frameDuration), 1) : 0;
+      const startFrame = currentFrame;
+      const endFrame = startFrame + frameCount;
+      startSeconds = startFrame * frameDuration;
+      endSeconds = endFrame * frameDuration;
+      effectiveDuration = endSeconds - startSeconds;
+      currentFrame = endFrame;
+      currentTime = endSeconds;
+    } else {
+      startSeconds = currentTime;
+      endSeconds = currentTime + baseDuration;
+      currentTime = endSeconds;
+    }
+
+    const startTime = formatTime(startSeconds);
+    const endTime = formatTime(endSeconds);
 
     lines.push(`${index + 1}\n${startTime} --> ${endTime}\n${pair.dialogue}\n`);
 
-    log.push(
-      `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${adjustedDuration.toFixed(3)}s`
-    );
-
-    currentTime += adjustedDuration;
+    if (frameDuration) {
+      const frameInfo = frameCount !== null ? `${frameCount}f @ ${frameRate.toFixed(2)}fps` : `${frameRate.toFixed(2)}fps`;
+      log.push(
+        `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${effectiveDuration.toFixed(3)}s (${frameInfo})`
+      );
+    } else {
+      log.push(
+        `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${effectiveDuration.toFixed(3)}s`
+      );
+    }
   });
 
   const srtContent = lines.join("\n");
+  const finalTotal = frameDuration ? currentFrame * frameDuration : currentTime;
 
   return {
     clipCount: pairs.length,
     originalTotal,
     adjustment,
     targetTotal,
+    finalTotal,
+    alignToFrames: Boolean(frameDuration),
+    frameRate,
     srtContent,
     log,
   };
@@ -223,6 +278,7 @@ async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) 
 function showResults(result, mode) {
   clipCountEl.textContent = result.clipCount.toString();
   originalTotalEl.textContent = `${result.originalTotal.toFixed(2)} 秒`;
+  finalTotalEl.textContent = `${result.finalTotal.toFixed(2)} 秒`;
   adjustmentEl.textContent = `${result.adjustment.toFixed(4)} 秒`;
 
   if (mode === "auto" && typeof result.targetTotal === "number") {
@@ -232,6 +288,9 @@ function showResults(result, mode) {
   }
 
   const messages = [...result.log];
+  if (result.alignToFrames && result.frameRate) {
+    messages.unshift(`フレームスナップ: ${result.frameRate.toFixed(2)}fps`);
+  }
   if (result.warnings?.length) {
     messages.push("\n⚠️ 警告:");
     messages.push(...result.warnings.map((warning) => `- ${warning}`));
