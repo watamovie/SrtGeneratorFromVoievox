@@ -161,6 +161,13 @@ legend {
   margin: 0.5rem 0;
 }
 
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+
 .mode-settings {
   display: grid;
   gap: 0.5rem;
@@ -176,6 +183,16 @@ legend {
   border: 1px solid var(--border);
   background: rgba(15, 23, 42, 0.4);
   color: var(--text);
+}
+
+.frame-rate-options {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.frame-rate-options.hidden {
+  display: none;
 }
 
 #results h3 {
@@ -208,6 +225,10 @@ legend {
 }
 
 .auto-only {
+  display: none;
+}
+
+.frame-only {
   display: none;
 }
 
