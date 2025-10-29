@@ -9,12 +9,21 @@ const adjustmentEl = document.getElementById("adjustment");
 const targetTotalEl = document.getElementById("targetTotal");
 const logEl = document.getElementById("log");
 const downloadLink = document.getElementById("downloadLink");
+const enableFrameSnapInput = document.getElementById("enableFrameSnap");
+const frameRateFields = document.getElementById("frameRateFields");
+const frameRateSelect = document.getElementById("frameRate");
+const adjustedTotalEl = document.getElementById("adjustedTotal");
+const frameRateSummaryEl = document.getElementById("frameRateSummary");
 
 let storedFiles = [];
 let currentDownloadUrl = null;
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
+
+if (enableFrameSnapInput?.checked && frameRateFields) {
+  frameRateFields.classList.remove("hidden");
+}
 
 function handleFileSelection(files) {
   storedFiles = Array.from(files);
@@ -58,7 +67,11 @@ settingsForm.addEventListener("change", (event) => {
 
     document
       .querySelectorAll(".auto-only")
-      .forEach((el) => el.style.display = mode === "auto" ? "flex" : "none");
+      .forEach((el) => {
+        el.style.display = mode === "auto" ? "flex" : "none";
+      });
+  } else if (event.target === enableFrameSnapInput && frameRateFields) {
+    frameRateFields.classList.toggle("hidden", !enableFrameSnapInput.checked);
   }
 });
 
@@ -81,12 +94,18 @@ settingsForm.addEventListener("submit", async (event) => {
     const mode = settingsForm.elements["mode"].value;
     const manualAdjustment = parseFloat(settingsForm.elements["manualAdjustment"].value || "0");
     const targetTotalTime = parseFloat(settingsForm.elements["targetTotalTime"].value || "0");
+    const frameSnapEnabled = enableFrameSnapInput?.checked ?? false;
+    const frameRate = parseFloat(frameRateSelect?.value || "0");
 
     const processingResult = await processPairs({
       pairs,
       mode,
       manualAdjustment,
       targetTotalTime,
+      frameSettings: {
+        enabled: frameSnapEnabled,
+        frameRate,
+      },
     });
 
     showResults({ ...processingResult, warnings }, mode);
@@ -174,7 +193,14 @@ function formatTime(seconds) {
   return `${pad(hours)}:${pad(minutes)}:${pad(secs)},${pad(milliseconds, 3)}`;
 }
 
-async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) {
+function formatFrameRate(frameRate) {
+  if (Number.isInteger(frameRate)) {
+    return `${frameRate}`;
+  }
+  return frameRate.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime, frameSettings }) {
   const durations = pairs.map((pair) => pair.duration);
   const originalTotal = durations.reduce((sum, value) => sum + value, 0);
 
@@ -190,31 +216,64 @@ async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) 
     adjustment = clipCount ? (targetTotalTime - originalTotal) / clipCount : 0;
   }
 
+  const frameRate =
+    frameSettings?.enabled && frameSettings.frameRate > 0 ? frameSettings.frameRate : null;
+  const frameDuration = frameRate ? 1 / frameRate : null;
+
   let currentTime = 0;
+  let currentFrame = 0;
   const lines = [];
   const log = [];
 
   pairs.forEach((pair, index) => {
-    const adjustedDuration = Math.max(pair.duration + adjustment, 0);
-    const startTime = formatTime(currentTime);
-    const endTime = formatTime(currentTime + adjustedDuration);
+    const baseDuration = Math.max(pair.duration + adjustment, 0);
+
+    let startSeconds;
+    let endSeconds;
+    let appliedDuration = baseDuration;
+    let durationFrames = null;
+
+    if (frameRate) {
+      const startFrame = currentFrame;
+      durationFrames = Math.round(baseDuration * frameRate);
+      if (baseDuration > 0 && durationFrames === 0) {
+        durationFrames = 1;
+      }
+      const endFrame = startFrame + durationFrames;
+      startSeconds = startFrame * frameDuration;
+      endSeconds = endFrame * frameDuration;
+      appliedDuration = durationFrames * frameDuration;
+      currentFrame = endFrame;
+      currentTime = endSeconds;
+    } else {
+      startSeconds = currentTime;
+      endSeconds = currentTime + baseDuration;
+      currentTime = endSeconds;
+    }
+
+    const startTime = formatTime(startSeconds);
+    const endTime = formatTime(endSeconds);
 
     lines.push(`${index + 1}\n${startTime} --> ${endTime}\n${pair.dialogue}\n`);
 
-    log.push(
-      `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${adjustedDuration.toFixed(3)}s`
-    );
+    const logEntry = frameRate
+      ? `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${appliedDuration
+          .toFixed(3)}s (${durationFrames}f)`
+      : `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${appliedDuration.toFixed(3)}s`;
 
-    currentTime += adjustedDuration;
+    log.push(logEntry);
   });
 
   const srtContent = lines.join("\n");
+  const actualTotal = currentTime;
 
   return {
     clipCount: pairs.length,
     originalTotal,
     adjustment,
     targetTotal,
+    actualTotal,
+    frameRate,
     srtContent,
     log,
   };
@@ -223,6 +282,7 @@ async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) 
 function showResults(result, mode) {
   clipCountEl.textContent = result.clipCount.toString();
   originalTotalEl.textContent = `${result.originalTotal.toFixed(2)} 秒`;
+  adjustedTotalEl.textContent = `${result.actualTotal.toFixed(2)} 秒`;
   adjustmentEl.textContent = `${result.adjustment.toFixed(4)} 秒`;
 
   if (mode === "auto" && typeof result.targetTotal === "number") {
@@ -231,7 +291,16 @@ function showResults(result, mode) {
     targetTotalEl.textContent = "-";
   }
 
+  if (result.frameRate) {
+    frameRateSummaryEl.textContent = `${formatFrameRate(result.frameRate)} fps`;
+  } else {
+    frameRateSummaryEl.textContent = "未使用";
+  }
+
   const messages = [...result.log];
+  if (result.frameRate) {
+    messages.unshift(`🎬 ${formatFrameRate(result.frameRate)} fps のフレーム境界にスナップしています。`);
+  }
   if (result.warnings?.length) {
     messages.push("\n⚠️ 警告:");
     messages.push(...result.warnings.map((warning) => `- ${warning}`));
