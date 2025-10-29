@@ -80,6 +80,28 @@
             <p class="hint">選択した音声の合計時間に合わせて、均等に微調整します。</p>
           </div>
 
+          <fieldset>
+            <legend>フレーム境界への揃え</legend>
+            <label class="checkbox">
+              <input type="checkbox" id="enableFrameAlign" name="enableFrameAlign" />
+              <span>字幕タイムコードを指定フレームレートに合わせる</span>
+            </label>
+            <div class="frame-settings hidden" id="frameRateWrapper">
+              <label for="frameRate">フレームレート (fps)</label>
+              <input
+                type="number"
+                id="frameRate"
+                name="frameRate"
+                step="0.01"
+                min="1"
+                value="29.97"
+              />
+              <p class="hint">
+                例: 24, 29.97, 30, 60 など。開始時刻は切り捨て、終了時刻は切り上げで丸められます。
+              </p>
+            </div>
+          </fieldset>
+
           <button type="submit" class="button button-primary">SRTを生成</button>
         </form>
       </section>
@@ -101,6 +123,14 @@
               <div>
                 <dt>適用調整値</dt>
                 <dd id="adjustment">0.0000 秒</dd>
+              </div>
+              <div>
+                <dt>出力合計時間</dt>
+                <dd id="outputTotal">0.00 秒</dd>
+              </div>
+              <div>
+                <dt>フレーム揃え</dt>
+                <dd id="frameAlignment">-</dd>
               </div>
               <div class="auto-only">
                 <dt>目標合計時間</dt>
