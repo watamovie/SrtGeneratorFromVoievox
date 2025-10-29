@@ -9,6 +9,10 @@ const adjustmentEl = document.getElementById("adjustment");
 const targetTotalEl = document.getElementById("targetTotal");
 const logEl = document.getElementById("log");
 const downloadLink = document.getElementById("downloadLink");
+const finalTotalEl = document.getElementById("finalTotal");
+const frameRateStatEl = document.getElementById("frameRateStat");
+const roundingRow = document.getElementById("roundingRow");
+const roundingDiffEl = document.getElementById("roundingDiff");
 
 let storedFiles = [];
 let currentDownloadUrl = null;
@@ -53,7 +57,7 @@ settingsForm.addEventListener("change", (event) => {
   if (event.target.name === "mode") {
     const mode = event.target.value;
     document
-      .querySelectorAll(".mode-settings")
+      .querySelectorAll(".mode-settings[data-mode]")
       .forEach((el) => el.classList.toggle("hidden", el.dataset.mode !== mode));
 
     document
@@ -81,12 +85,15 @@ settingsForm.addEventListener("submit", async (event) => {
     const mode = settingsForm.elements["mode"].value;
     const manualAdjustment = parseFloat(settingsForm.elements["manualAdjustment"].value || "0");
     const targetTotalTime = parseFloat(settingsForm.elements["targetTotalTime"].value || "0");
+    const frameRateValue = parseFloat(settingsForm.elements["frameRate"].value || "0");
+    const frameRate = Number.isFinite(frameRateValue) && frameRateValue > 0 ? frameRateValue : null;
 
     const processingResult = await processPairs({
       pairs,
       mode,
       manualAdjustment,
       targetTotalTime,
+      frameRate,
     });
 
     showResults({ ...processingResult, warnings }, mode);
@@ -174,7 +181,7 @@ function formatTime(seconds) {
   return `${pad(hours)}:${pad(minutes)}:${pad(secs)},${pad(milliseconds, 3)}`;
 }
 
-async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) {
+async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime, frameRate }) {
   const durations = pairs.map((pair) => pair.duration);
   const originalTotal = durations.reduce((sum, value) => sum + value, 0);
 
@@ -190,31 +197,81 @@ async function processPairs({ pairs, mode, manualAdjustment, targetTotalTime }) 
     adjustment = clipCount ? (targetTotalTime - originalTotal) / clipCount : 0;
   }
 
-  let currentTime = 0;
+  const frameRateValue = Number.isFinite(frameRate) && frameRate > 0 ? frameRate : null;
+  const frameDuration = frameRateValue ? 1 / frameRateValue : null;
+  let rawCurrentTime = 0;
+  let actualCurrentTime = 0;
+  let lastRoundedEndFrame = 0;
+  let roundingDiffTotal = 0;
   const lines = [];
   const log = [];
 
   pairs.forEach((pair, index) => {
     const adjustedDuration = Math.max(pair.duration + adjustment, 0);
-    const startTime = formatTime(currentTime);
-    const endTime = formatTime(currentTime + adjustedDuration);
+    const rawStart = rawCurrentTime;
+    const rawEnd = rawStart + adjustedDuration;
+
+    let startSeconds;
+    let endSeconds;
+    let actualDuration;
+    let frameInfo = "";
+
+    if (frameDuration) {
+      const baseStartFrame = Math.round(rawStart * frameRateValue);
+      const startFrame = Math.max(lastRoundedEndFrame, baseStartFrame);
+      const targetEndFrame = Math.round(rawEnd * frameRateValue);
+      const hasContent = adjustedDuration > 1e-6;
+      const minEndFrame = hasContent ? startFrame + 1 : startFrame;
+      const endFrame = Math.max(minEndFrame, targetEndFrame);
+
+      startSeconds = startFrame * frameDuration;
+      endSeconds = endFrame * frameDuration;
+      actualDuration = endSeconds - startSeconds;
+      frameInfo = ` (${endFrame - startFrame}f)`;
+      roundingDiffTotal += actualDuration - adjustedDuration;
+      lastRoundedEndFrame = endFrame;
+      actualCurrentTime = endSeconds;
+    } else {
+      startSeconds = actualCurrentTime;
+      actualDuration = adjustedDuration;
+      endSeconds = startSeconds + actualDuration;
+      actualCurrentTime = endSeconds;
+    }
+
+    rawCurrentTime = rawEnd;
+
+    const startTime = formatTime(startSeconds);
+    const endTime = formatTime(endSeconds);
 
     lines.push(`${index + 1}\n${startTime} --> ${endTime}\n${pair.dialogue}\n`);
 
     log.push(
-      `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${adjustedDuration.toFixed(3)}s`
+      `${index + 1}. ${pair.baseName}.wav (${pair.duration.toFixed(3)}s) → ${actualDuration.toFixed(3)}s${frameInfo}`
     );
-
-    currentTime += adjustedDuration;
   });
 
   const srtContent = lines.join("\n");
+
+  const finalTotal = actualCurrentTime;
+
+  if (frameDuration) {
+    const diffSign = roundingDiffTotal >= 0 ? "+" : "";
+    log.push(
+      "",
+      `フレームレート: ${frameRateValue.toFixed(3)} fps`,
+      `丸め後の合計時間: ${finalTotal.toFixed(3)}s`,
+      `丸めによる差分合計: ${diffSign}${roundingDiffTotal.toFixed(3)}s`
+    );
+  }
 
   return {
     clipCount: pairs.length,
     originalTotal,
     adjustment,
     targetTotal,
+    finalTotal,
+    frameRate: frameRateValue,
+    roundingDiff: roundingDiffTotal,
     srtContent,
     log,
   };
@@ -224,6 +281,17 @@ function showResults(result, mode) {
   clipCountEl.textContent = result.clipCount.toString();
   originalTotalEl.textContent = `${result.originalTotal.toFixed(2)} 秒`;
   adjustmentEl.textContent = `${result.adjustment.toFixed(4)} 秒`;
+  finalTotalEl.textContent = `${result.finalTotal.toFixed(3)} 秒`;
+
+  if (result.frameRate) {
+    frameRateStatEl.textContent = `${result.frameRate.toFixed(3)} fps`;
+    const diffSign = result.roundingDiff >= 0 ? "+" : "";
+    roundingDiffEl.textContent = `${diffSign}${result.roundingDiff.toFixed(3)} 秒`;
+    roundingRow.classList.remove("hidden");
+  } else {
+    frameRateStatEl.textContent = "未使用";
+    roundingRow.classList.add("hidden");
+  }
 
   if (mode === "auto" && typeof result.targetTotal === "number") {
     targetTotalEl.textContent = `${result.targetTotal.toFixed(2)} 秒`;

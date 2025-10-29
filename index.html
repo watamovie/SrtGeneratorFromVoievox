@@ -80,6 +80,22 @@
             <p class="hint">選択した音声の合計時間に合わせて、均等に微調整します。</p>
           </div>
 
+          <div class="mode-settings global-settings">
+            <label for="frameRate">フレームレート（任意）</label>
+            <input
+              type="number"
+              id="frameRate"
+              name="frameRate"
+              step="0.01"
+              min="0"
+              placeholder="例: 29.97"
+            />
+            <p class="hint">
+              指定すると、字幕の開始・終了時刻を最も近いフレーム境界（1 ÷ フレームレート秒）へ丸め込みます。
+              動画編集ソフトで音声クリップがフレーム単位に揃えられる場合のズレを吸収できます。
+            </p>
+          </div>
+
           <button type="submit" class="button button-primary">SRTを生成</button>
         </form>
       </section>
@@ -102,9 +118,21 @@
                 <dt>適用調整値</dt>
                 <dd id="adjustment">0.0000 秒</dd>
               </div>
+              <div>
+                <dt>調整後合計時間</dt>
+                <dd id="finalTotal">0.00 秒</dd>
+              </div>
+              <div>
+                <dt>フレームレート</dt>
+                <dd id="frameRateStat">-</dd>
+              </div>
               <div class="auto-only">
                 <dt>目標合計時間</dt>
                 <dd id="targetTotal">-</dd>
+              </div>
+              <div id="roundingRow" class="hidden">
+                <dt>フレーム丸めによる累積差</dt>
+                <dd id="roundingDiff">0.000 秒</dd>
               </div>
             </dl>
           </div>
