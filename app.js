@@ -7,6 +7,10 @@ const settingsForm = document.getElementById("settingsForm");
 const modeInput = document.getElementById("modeInput");
 const autoModeToggle = document.getElementById("autoModeToggle");
 const resultsSection = document.getElementById("results");
+const openSettingsButton = document.getElementById("openSettings");
+const closeSettingsButton = document.getElementById("closeSettings");
+const advancedModal = document.getElementById("advancedModal");
+const themeToggle = document.getElementById("themeToggle");
 const clipCountEl = document.getElementById("clipCount");
 const originalTotalEl = document.getElementById("originalTotal");
 const adjustmentEl = document.getElementById("adjustment");
@@ -31,6 +35,97 @@ let pickerMode = "folder";
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
+
+if (downloadLink) {
+  downloadLink.setAttribute("aria-disabled", "true");
+  downloadLink.removeAttribute("href");
+  downloadLink.setAttribute("tabindex", "-1");
+}
+
+const themeState = {
+  current: null,
+};
+
+const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)");
+
+const updateThemeToggleLabel = (theme) => {
+  if (!themeToggle) return;
+  const iconSpan = themeToggle.querySelector(".icon");
+  if (!iconSpan) return;
+  const nextTheme = theme === "dark" ? "light" : "dark";
+  iconSpan.textContent = nextTheme === "dark" ? "🌙" : "☀️";
+  const label = nextTheme === "dark" ? "ダークテーマに切り替える" : "ライトテーマに切り替える";
+  themeToggle.setAttribute("aria-label", label);
+};
+
+const applyTheme = (theme) => {
+  const normalized = theme === "dark" ? "dark" : "light";
+  themeState.current = normalized;
+  if (normalized === "dark") {
+    document.documentElement.dataset.theme = "dark";
+  } else {
+    delete document.documentElement.dataset.theme;
+  }
+  updateThemeToggleLabel(normalized);
+};
+
+const loadTheme = () => {
+  const stored = localStorage.getItem("srt-generator-theme");
+  if (stored === "light" || stored === "dark") {
+    return stored;
+  }
+  return prefersDark?.matches ? "dark" : "light";
+};
+
+applyTheme(loadTheme());
+
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const nextTheme = themeState.current === "dark" ? "light" : "dark";
+    applyTheme(nextTheme);
+    localStorage.setItem("srt-generator-theme", nextTheme);
+  });
+}
+
+const handleThemePreferenceChange = (event) => {
+  const stored = localStorage.getItem("srt-generator-theme");
+  if (stored === "light" || stored === "dark") {
+    return;
+  }
+  applyTheme(event.matches ? "dark" : "light");
+};
+
+if (prefersDark?.addEventListener) {
+  prefersDark.addEventListener("change", handleThemePreferenceChange);
+} else if (prefersDark?.addListener) {
+  prefersDark.addListener(handleThemePreferenceChange);
+}
+
+const setModalOpen = (open) => {
+  if (!advancedModal) return;
+  advancedModal.setAttribute("aria-hidden", open ? "false" : "true");
+  document.body.classList.toggle("modal-open", open);
+  if (open) {
+    closeSettingsButton?.focus();
+  } else {
+    openSettingsButton?.focus();
+  }
+};
+
+openSettingsButton?.addEventListener("click", () => setModalOpen(true));
+closeSettingsButton?.addEventListener("click", () => setModalOpen(false));
+
+advancedModal?.addEventListener("click", (event) => {
+  if (event.target instanceof HTMLElement && event.target.dataset.close !== undefined) {
+    setModalOpen(false);
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && advancedModal?.getAttribute("aria-hidden") === "false") {
+    setModalOpen(false);
+  }
+});
 
 if (frameToggle && frameRateOptionsEl && frameRateInput) {
   const syncFrameOptionsVisibility = () => {
@@ -510,6 +605,8 @@ function showResults(result, mode) {
   currentDownloadUrl = URL.createObjectURL(blob);
   downloadLink.href = currentDownloadUrl;
   downloadLink.download = "output.srt";
+  downloadLink.setAttribute("aria-disabled", "false");
+  downloadLink.removeAttribute("tabindex");
 
   resultsSection.hidden = false;
 }
