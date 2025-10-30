@@ -18,18 +18,22 @@
       <section class="card">
         <h2>1. ファイルを読み込む</h2>
         <p>
-          フォルダをまとめて読み込む場合は「フォルダ選択」、個別に指定する場合は複数ファイルを選択してください。
+          フォルダごとまとめて処理するか、複数ファイルを個別に選択するかをトグルで切り替えて利用してください。
         </p>
-        <div class="input-group">
-          <label for="folderInput" class="button button-secondary">
-            フォルダを選択
-            <input id="folderInput" type="file" webkitdirectory directory multiple />
-          </label>
-          <span class="input-separator">または</span>
-          <label for="fileInput" class="button button-secondary">
-            ファイルを選択
-            <input id="fileInput" type="file" multiple accept=".wav,.txt" />
-          </label>
+        <div class="input-group picker-control">
+          <button type="button" id="openPickerButton" class="button button-secondary">
+            フォルダ or ファイルを選択
+          </button>
+          <div class="picker-toggle" id="pickerToggle" role="radiogroup" aria-label="読み込み対象の切り替え">
+            <button type="button" class="picker-option active" data-picker-mode="folder" aria-pressed="true">
+              フォルダ
+            </button>
+            <button type="button" class="picker-option" data-picker-mode="file" aria-pressed="false">
+              ファイル
+            </button>
+          </div>
+          <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
+          <input id="fileInput" type="file" multiple accept=".wav,.txt" hidden />
         </div>
         <p class="hint">
           選択されたファイルはブラウザ上でのみ処理され、サーバーにはアップロードされません。
@@ -40,15 +44,12 @@
       <section class="card">
         <h2>2. タイミング調整モード</h2>
         <form id="settingsForm" class="settings-form">
+          <input type="hidden" name="mode" id="modeInput" value="manual" />
           <fieldset>
-            <legend>モード選択</legend>
-            <label class="radio">
-              <input type="radio" name="mode" value="manual" checked />
-              <span>手動調整（全字幕に固定値を加算）</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="mode" value="auto" />
-              <span>自動調整（目標合計時間に合わせる）</span>
+            <legend>タイミング調整</legend>
+            <label class="toggle">
+              <input type="checkbox" id="autoModeToggle" />
+              <span>自動調整モードを使用する</span>
             </label>
           </fieldset>
 
@@ -83,10 +84,18 @@
           <fieldset>
             <legend>フレーム揃え</legend>
             <label class="checkbox">
-              <input type="checkbox" id="enableFrameLock" name="enableFrameLock" />
+              <input type="checkbox" id="enableFrameLock" name="enableFrameLock" checked />
               <span>フレーム境界に合わせてタイムコードを丸める</span>
             </label>
-            <div id="frameRateOptions" class="frame-rate-options hidden">
+            <div id="frameRateOptions" class="frame-rate-options">
+              <p class="hint">プリセットをクリックするか、任意のフレームレートを入力してください。</p>
+              <div class="frame-rate-presets" id="frameRatePresets" role="radiogroup" aria-label="フレームレートプリセット">
+                <button type="button" class="frame-rate-chip" data-frame-rate="23.976">23.976</button>
+                <button type="button" class="frame-rate-chip" data-frame-rate="24">24</button>
+                <button type="button" class="frame-rate-chip active" data-frame-rate="30">30</button>
+                <button type="button" class="frame-rate-chip" data-frame-rate="60">60</button>
+                <button type="button" class="frame-rate-chip" data-frame-rate="custom">カスタム</button>
+              </div>
               <label for="frameRate">使用するフレームレート (fps)</label>
               <input
                 type="number"
@@ -99,7 +108,7 @@
               />
               <p class="hint">例: 29.97fps のタイムラインなら 29.97 と入力してください。</p>
               <label class="checkbox">
-                <input type="checkbox" id="trimFrameOverflow" name="trimFrameOverflow" />
+                <input type="checkbox" id="trimFrameOverflow" name="trimFrameOverflow" checked />
                 <span>フレームからはみ出した余剰時間を切り捨てる</span>
               </label>
             </div>

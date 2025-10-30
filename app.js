@@ -1,7 +1,11 @@
 const folderInput = document.getElementById("folderInput");
 const fileInput = document.getElementById("fileInput");
+const openPickerButton = document.getElementById("openPickerButton");
+const pickerToggle = document.getElementById("pickerToggle");
 const selectedFiles = document.getElementById("selectedFiles");
 const settingsForm = document.getElementById("settingsForm");
+const modeInput = document.getElementById("modeInput");
+const autoModeToggle = document.getElementById("autoModeToggle");
 const resultsSection = document.getElementById("results");
 const clipCountEl = document.getElementById("clipCount");
 const originalTotalEl = document.getElementById("originalTotal");
@@ -13,12 +17,17 @@ const frameToggle = document.getElementById("enableFrameLock");
 const frameRateOptionsEl = document.getElementById("frameRateOptions");
 const frameRateInput = document.getElementById("frameRate");
 const trimFrameOverflowInput = document.getElementById("trimFrameOverflow");
+const frameRatePresetContainer = document.getElementById("frameRatePresets");
 const frameRateStatEl = document.getElementById("frameRateStat");
 const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
 const frameDriftEl = document.getElementById("frameDrift");
 
+const manualSettings = document.querySelector('.mode-settings[data-mode="manual"]');
+const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
+
 let storedFiles = [];
 let currentDownloadUrl = null;
+let pickerMode = "folder";
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
@@ -31,10 +40,140 @@ if (frameToggle && frameRateOptionsEl && frameRateInput) {
     if (trimFrameOverflowInput) {
       trimFrameOverflowInput.disabled = !enabled;
     }
+    if (frameRatePresetContainer) {
+      frameRatePresetContainer
+        .querySelectorAll("button")
+        .forEach((button) => {
+          button.disabled = !enabled;
+        });
+    }
   };
 
   syncFrameOptionsVisibility();
   frameToggle.addEventListener("change", syncFrameOptionsVisibility);
+}
+
+if (pickerToggle && openPickerButton) {
+  const pickerOptions = Array.from(
+    pickerToggle.querySelectorAll(".picker-option[data-picker-mode]")
+  );
+
+  const setPickerMode = (mode) => {
+    if (!mode) return;
+    pickerMode = mode;
+    pickerOptions.forEach((button) => {
+      const isActive = button.dataset.pickerMode === mode;
+      button.classList.toggle("active", isActive);
+      button.setAttribute("aria-pressed", String(isActive));
+    });
+  };
+
+  const activeButton = pickerOptions.find((button) => button.classList.contains("active"));
+  setPickerMode(activeButton?.dataset.pickerMode ?? "folder");
+
+  pickerOptions.forEach((button) => {
+    button.addEventListener("click", () => {
+      const mode = button.dataset.pickerMode;
+      if (mode && mode !== pickerMode) {
+        setPickerMode(mode);
+      }
+    });
+  });
+
+  openPickerButton.addEventListener("click", () => {
+    if (pickerMode === "folder") {
+      folderInput?.click();
+    } else {
+      fileInput?.click();
+    }
+  });
+
+  const syncModeFromInput = (mode) => {
+    if (!mode || mode === pickerMode) return;
+    setPickerMode(mode);
+  };
+
+  folderInput?.addEventListener("click", () => syncModeFromInput("folder"));
+  fileInput?.addEventListener("click", () => syncModeFromInput("file"));
+  folderInput?.addEventListener("change", () => setPickerMode("folder"));
+  fileInput?.addEventListener("change", () => setPickerMode("file"));
+}
+
+if (autoModeToggle && modeInput) {
+  const updateModeVisibility = () => {
+    const useAuto = autoModeToggle.checked;
+    modeInput.value = useAuto ? "auto" : "manual";
+    manualSettings?.classList.toggle("hidden", useAuto);
+    autoSettings?.classList.toggle("hidden", !useAuto);
+    const manualInput = settingsForm?.elements["manualAdjustment"];
+    const autoInput = settingsForm?.elements["targetTotalTime"];
+    if (manualInput) {
+      manualInput.disabled = useAuto;
+    }
+    if (autoInput) {
+      autoInput.disabled = !useAuto;
+    }
+    document
+      .querySelectorAll(".auto-only")
+      .forEach((el) => (el.style.display = useAuto ? "flex" : "none"));
+  };
+
+  updateModeVisibility();
+  autoModeToggle.addEventListener("change", updateModeVisibility);
+}
+
+if (frameRatePresetContainer && frameRateInput) {
+  const presetButtons = Array.from(
+    frameRatePresetContainer.querySelectorAll(".frame-rate-chip[data-frame-rate]")
+  );
+
+  const activatePreset = (targetButton) => {
+    presetButtons.forEach((button) => {
+      const isActive = button === targetButton;
+      button.classList.toggle("active", isActive);
+      button.setAttribute("aria-pressed", String(isActive));
+    });
+  };
+
+  presetButtons.forEach((button) => {
+    if (!button.hasAttribute("aria-pressed")) {
+      button.setAttribute("aria-pressed", String(button.classList.contains("active")));
+    }
+
+    button.addEventListener("click", () => {
+      if (button.disabled) return;
+      const value = button.dataset.frameRate;
+      activatePreset(button);
+      if (value && value !== "custom") {
+        frameRateInput.value = value;
+      }
+      if (value === "custom") {
+        frameRateInput.focus();
+      }
+    });
+  });
+
+  const syncPresetFromInput = () => {
+    const currentValue = Number(frameRateInput.value);
+    const matched = presetButtons.find((button) => {
+      const presetValue = Number(button.dataset.frameRate);
+      return button.dataset.frameRate !== "custom" && Number.isFinite(presetValue)
+        ? Math.abs(presetValue - currentValue) < 1e-3
+        : false;
+    });
+
+    if (matched) {
+      activatePreset(matched);
+    } else {
+      const customButton = presetButtons.find((button) => button.dataset.frameRate === "custom");
+      if (customButton) {
+        activatePreset(customButton);
+      }
+    }
+  };
+
+  syncPresetFromInput();
+  frameRateInput.addEventListener("input", syncPresetFromInput);
 }
 
 function handleFileSelection(files) {
@@ -56,30 +195,21 @@ function handleFileSelection(files) {
   selectedFiles.classList.remove("empty");
 }
 
-folderInput.addEventListener("change", (event) => {
+folderInput?.addEventListener("change", (event) => {
   if (event.target.files?.length) {
     handleFileSelection(event.target.files);
-    fileInput.value = "";
+    if (fileInput) {
+      fileInput.value = "";
+    }
   }
 });
 
-fileInput.addEventListener("change", (event) => {
+fileInput?.addEventListener("change", (event) => {
   if (event.target.files?.length) {
     handleFileSelection(event.target.files);
-    folderInput.value = "";
-  }
-});
-
-settingsForm.addEventListener("change", (event) => {
-  if (event.target.name === "mode") {
-    const mode = event.target.value;
-    document
-      .querySelectorAll(".mode-settings")
-      .forEach((el) => el.classList.toggle("hidden", el.dataset.mode !== mode));
-
-    document
-      .querySelectorAll(".auto-only")
-      .forEach((el) => el.style.display = mode === "auto" ? "flex" : "none");
+    if (folderInput) {
+      folderInput.value = "";
+    }
   }
 });
 
@@ -99,7 +229,7 @@ settingsForm.addEventListener("submit", async (event) => {
       return;
     }
 
-    const mode = settingsForm.elements["mode"].value;
+    const mode = modeInput?.value ?? "manual";
     const manualAdjustment = parseFloat(settingsForm.elements["manualAdjustment"].value || "0");
     const targetTotalTime = parseFloat(settingsForm.elements["targetTotalTime"].value || "0");
     const frameLockEnabled = settingsForm.elements["enableFrameLock"]?.checked ?? false;
