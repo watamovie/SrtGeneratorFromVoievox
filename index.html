@@ -7,52 +7,158 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="app-header">
-      <h1>SRT字幕自動生成ツール</h1>
-      <p class="lead">
-        音声（.wav）とテキスト（.txt）のペアから、全体時間に合わせてSRT字幕を生成します。
-      </p>
+    <header class="top-bar">
+      <div class="top-bar__text">
+        <h1 class="top-bar__title">SRT字幕自動生成</h1>
+        <p class="lead">音声とテキストのペアから、すぐに字幕を生成してダウンロードできます。</p>
+      </div>
+      <button
+        id="openSettingsButton"
+        class="icon-button"
+        type="button"
+        aria-haspopup="dialog"
+        aria-controls="settingsPanel"
+        aria-expanded="false"
+      >
+        <span class="sr-only">詳細設定を開く</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8.94-2.85-.78-1.35a1 1 0 0 1 .21-1.2l1.1-1.05a1 1 0 0 0 .08-1.32l-1.7-2.35a1 1 0 0 0-1.28-.3l-1.4.68a1 1 0 0 1-1.24-.3l-.88-1.2a1 1 0 0 0-1.14-.38l-2.8.9a1 1 0 0 0-.68.95l.06 1.63a1 1 0 0 1-.62.94l-1.5.58a1 1 0 0 0-.63 1.08l.45 2.82a1 1 0 0 0 1.02.83l1.57-.05a1 1 0 0 1 .97.65l.55 1.48a1 1 0 0 0 1.06.64l2.8-.39a1 1 0 0 0 .85-.93l.12-1.57a1 1 0 0 1 .83-.9l1.53-.3a1 1 0 0 0 .76-1.47Z"
+          />
+        </svg>
+      </button>
     </header>
 
-    <main class="app-main">
-      <section class="card">
-        <h2>1. ファイルを読み込む</h2>
-        <p>
-          フォルダごとまとめて処理するか、複数ファイルを個別に選択するかをトグルで切り替えて利用してください。
-        </p>
-        <div class="input-group picker-control">
-          <button type="button" id="openPickerButton" class="button button-secondary">
-            フォルダ or ファイルを選択
-          </button>
-          <div class="picker-toggle" id="pickerToggle" role="radiogroup" aria-label="読み込み対象の切り替え">
-            <button type="button" class="picker-option active" data-picker-mode="folder" aria-pressed="true">
-              フォルダ
-            </button>
-            <button type="button" class="picker-option" data-picker-mode="file" aria-pressed="false">
-              ファイル
-            </button>
+    <main class="main">
+      <form id="settingsForm" class="primary-form">
+        <section class="primary-card">
+          <div class="field">
+            <label class="field-label" for="openPickerButton">ファイルを選択</label>
+            <div class="file-input">
+              <button type="button" id="openPickerButton" class="button button-secondary">ブラウズ…</button>
+              <p class="hint">同名の <code>.wav</code> と <code>.txt</code> をペアにして処理します。</p>
+            </div>
+            <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
+            <input id="fileInput" type="file" multiple accept=".wav,.txt" hidden />
           </div>
-          <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
-          <input id="fileInput" type="file" multiple accept=".wav,.txt" hidden />
-        </div>
-        <p class="hint">
-          選択されたファイルはブラウザ上でのみ処理され、サーバーにはアップロードされません。
-        </p>
-        <div id="selectedFiles" class="selected-files" aria-live="polite"></div>
-      </section>
 
-      <section class="card">
-        <h2>2. タイミング調整モード</h2>
-        <form id="settingsForm" class="settings-form">
-          <input type="hidden" name="mode" id="modeInput" value="manual" />
-          <fieldset>
-            <legend>タイミング調整</legend>
-            <label class="toggle">
-              <input type="checkbox" id="autoModeToggle" />
-              <span>自動調整モードを使用する</span>
-            </label>
-          </fieldset>
+          <div id="selectedFiles" class="selected-files empty" aria-live="polite">
+            ファイルが選択されていません
+          </div>
 
+          <div class="field">
+            <label class="field-label" for="frameRate">フレームレート (fps)</label>
+            <div class="frame-rate-control">
+              <input
+                type="number"
+                id="frameRate"
+                name="frameRate"
+                step="0.001"
+                min="1"
+                max="240"
+                value="30"
+              />
+              <div class="frame-rate-presets" id="frameRatePresets" role="radiogroup" aria-label="フレームレートプリセット">
+                <button type="button" class="chip" data-frame-rate="23.976">23.976</button>
+                <button type="button" class="chip" data-frame-rate="24">24</button>
+                <button type="button" class="chip active" data-frame-rate="30">30</button>
+                <button type="button" class="chip" data-frame-rate="60">60</button>
+                <button type="button" class="chip" data-frame-rate="custom">カスタム</button>
+              </div>
+            </div>
+            <p class="hint">タイムラインのフレームレートを入力するか、プリセットを選択してください。</p>
+          </div>
+
+          <div class="primary-actions">
+            <button type="submit" class="button button-primary">SRTを生成</button>
+            <a id="downloadLink" class="button button-ghost" download="output.srt" aria-disabled="true">ダウンロード</a>
+          </div>
+        </section>
+
+        <section class="card results" id="results" hidden>
+          <header class="results__header">
+            <h2>結果</h2>
+            <p class="hint">生成内容とログはブラウザ内でのみ保持されます。</p>
+          </header>
+          <div class="result-grid">
+            <div>
+              <dl class="stats">
+                <div>
+                  <dt>クリップ数</dt>
+                  <dd id="clipCount">0</dd>
+                </div>
+                <div>
+                  <dt>元の合計時間</dt>
+                  <dd id="originalTotal">0.00 秒</dd>
+                </div>
+                <div>
+                  <dt>適用調整値</dt>
+                  <dd id="adjustment">0.0000 秒</dd>
+                </div>
+                <div class="auto-only">
+                  <dt>目標合計時間</dt>
+                  <dd id="targetTotal">-</dd>
+                </div>
+                <div class="frame-only">
+                  <dt>使用フレームレート</dt>
+                  <dd id="frameRateStat">-</dd>
+                </div>
+                <div class="frame-only">
+                  <dt>フレーム揃え後の合計</dt>
+                  <dd id="frameAlignedTotal">-</dd>
+                </div>
+                <div class="frame-only">
+                  <dt>累積のずれ</dt>
+                  <dd id="frameDrift">-</dd>
+                </div>
+              </dl>
+            </div>
+            <div>
+              <h3>ログ</h3>
+              <pre id="log" class="log"></pre>
+            </div>
+          </div>
+        </section>
+
+        <input type="hidden" name="mode" id="modeInput" value="manual" />
+      </form>
+    </main>
+
+    <footer class="app-footer">
+      <p>処理はすべてブラウザ内で完結します。選択したファイルが外部に送信されることはありません。</p>
+    </footer>
+
+    <div id="settingsPanel" class="settings-panel" aria-hidden="true">
+      <div class="settings-panel__overlay" data-close-settings></div>
+      <div class="settings-panel__content" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <header class="settings-panel__header">
+          <div>
+            <h2 id="settingsTitle">詳細設定</h2>
+            <p class="hint">フォルダ選択やタイミング調整などの詳細をカスタマイズできます。</p>
+          </div>
+          <button id="closeSettingsButton" class="icon-button" type="button">
+            <span class="sr-only">設定を閉じる</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6.7 6.7a1 1 0 0 1 1.4 0L12 10.6l3.9-3.9a1 1 0 1 1 1.4 1.4L13.4 12l3.9 3.9a1 1 0 0 1-1.4 1.4L12 13.4l-3.9 3.9a1 1 0 0 1-1.4-1.4l3.9-3.9-3.9-3.9a1 1 0 0 1 0-1.4Z" />
+            </svg>
+          </button>
+        </header>
+
+        <section class="settings-section">
+          <h3>ファイルの読み込み</h3>
+          <p class="hint">フォルダ単位か個別ファイル単位かを切り替えられます。</p>
+          <div class="picker-toggle" id="pickerToggle" role="radiogroup" aria-label="読み込み対象の切り替え">
+            <button type="button" class="picker-option active" data-picker-mode="folder" aria-pressed="true">フォルダ</button>
+            <button type="button" class="picker-option" data-picker-mode="file" aria-pressed="false">ファイル</button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3>タイミング調整モード</h3>
+          <label class="toggle">
+            <input type="checkbox" id="autoModeToggle" />
+            <span>自動調整モードを使用する</span>
+          </label>
           <div class="mode-settings" data-mode="manual">
             <label for="manualAdjustment">1クリップあたりの加算秒数</label>
             <input
@@ -80,94 +186,29 @@
             />
             <p class="hint">選択した音声の合計時間に合わせて、均等に微調整します。</p>
           </div>
+        </section>
 
-          <fieldset>
-            <legend>フレーム揃え</legend>
-            <label class="checkbox">
-              <input type="checkbox" id="enableFrameLock" name="enableFrameLock" checked />
-              <span>フレーム境界に合わせてタイムコードを丸める</span>
-            </label>
-            <div id="frameRateOptions" class="frame-rate-options">
-              <p class="hint">プリセットをクリックするか、任意のフレームレートを入力してください。</p>
-              <div class="frame-rate-presets" id="frameRatePresets" role="radiogroup" aria-label="フレームレートプリセット">
-                <button type="button" class="frame-rate-chip" data-frame-rate="23.976">23.976</button>
-                <button type="button" class="frame-rate-chip" data-frame-rate="24">24</button>
-                <button type="button" class="frame-rate-chip active" data-frame-rate="30">30</button>
-                <button type="button" class="frame-rate-chip" data-frame-rate="60">60</button>
-                <button type="button" class="frame-rate-chip" data-frame-rate="custom">カスタム</button>
-              </div>
-              <label for="frameRate">使用するフレームレート (fps)</label>
-              <input
-                type="number"
-                id="frameRate"
-                name="frameRate"
-                step="0.001"
-                min="1"
-                max="240"
-                value="30"
-              />
-              <p class="hint">例: 29.97fps のタイムラインなら 29.97 と入力してください。</p>
-              <label class="checkbox">
-                <input type="checkbox" id="trimFrameOverflow" name="trimFrameOverflow" checked />
-                <span>フレームからはみ出した余剰時間を切り捨てる</span>
-              </label>
-            </div>
-          </fieldset>
+        <section class="settings-section">
+          <h3>フレーム揃え</h3>
+          <label class="checkbox">
+            <input type="checkbox" id="enableFrameLock" name="enableFrameLock" checked />
+            <span>フレーム境界に合わせてタイムコードを丸める</span>
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" id="trimFrameOverflow" name="trimFrameOverflow" checked />
+            <span>フレームからはみ出した余剰時間を切り捨てる</span>
+          </label>
+        </section>
 
-          <button type="submit" class="button button-primary">SRTを生成</button>
-        </form>
-      </section>
-
-      <section class="card" id="results" hidden>
-        <h2>3. 結果</h2>
-        <div class="result-grid">
-          <div>
-            <h3>統計</h3>
-            <dl class="stats">
-              <div>
-                <dt>クリップ数</dt>
-                <dd id="clipCount">0</dd>
-              </div>
-              <div>
-                <dt>元の合計時間</dt>
-                <dd id="originalTotal">0.00 秒</dd>
-              </div>
-              <div>
-                <dt>適用調整値</dt>
-                <dd id="adjustment">0.0000 秒</dd>
-              </div>
-              <div class="auto-only">
-                <dt>目標合計時間</dt>
-                <dd id="targetTotal">-</dd>
-              </div>
-              <div class="frame-only">
-                <dt>使用フレームレート</dt>
-                <dd id="frameRateStat">-</dd>
-              </div>
-              <div class="frame-only">
-                <dt>フレーム揃え後の合計</dt>
-                <dd id="frameAlignedTotal">-</dd>
-              </div>
-              <div class="frame-only">
-                <dt>累積のずれ</dt>
-                <dd id="frameDrift">-</dd>
-              </div>
-            </dl>
-          </div>
-          <div>
-            <h3>ログ</h3>
-            <pre id="log" class="log"></pre>
-          </div>
-        </div>
-        <a id="downloadLink" class="button button-primary" download="output.srt">SRTファイルをダウンロード</a>
-      </section>
-    </main>
-
-    <footer class="app-footer">
-      <p>
-        同名の <code>.wav</code> と <code>.txt</code> ファイルをペアにして処理します。ファイル名は自動的に昇順で並び替えられます。
-      </p>
-    </footer>
+        <section class="settings-section">
+          <h3>テーマ</h3>
+          <label class="toggle">
+            <input type="checkbox" id="themeToggle" />
+            <span>ダークモード</span>
+          </label>
+        </section>
+      </div>
+    </div>
 
     <script src="app.js" type="module"></script>
   </body>

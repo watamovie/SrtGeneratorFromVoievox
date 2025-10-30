@@ -14,13 +14,20 @@ const targetTotalEl = document.getElementById("targetTotal");
 const logEl = document.getElementById("log");
 const downloadLink = document.getElementById("downloadLink");
 const frameToggle = document.getElementById("enableFrameLock");
-const frameRateOptionsEl = document.getElementById("frameRateOptions");
 const frameRateInput = document.getElementById("frameRate");
 const trimFrameOverflowInput = document.getElementById("trimFrameOverflow");
 const frameRatePresetContainer = document.getElementById("frameRatePresets");
 const frameRateStatEl = document.getElementById("frameRateStat");
 const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
 const frameDriftEl = document.getElementById("frameDrift");
+const frameRateControl = document.querySelector(".frame-rate-control");
+const openSettingsButton = document.getElementById("openSettingsButton");
+const settingsPanel = document.getElementById("settingsPanel");
+const settingsOverlay = settingsPanel?.querySelector("[data-close-settings]");
+const settingsContent = settingsPanel?.querySelector(".settings-panel__content");
+const closeSettingsButton = document.getElementById("closeSettingsButton");
+const themeToggle = document.getElementById("themeToggle");
+const rootElement = document.documentElement;
 
 const manualSettings = document.querySelector('.mode-settings[data-mode="manual"]');
 const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
@@ -28,30 +35,119 @@ const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
 let storedFiles = [];
 let currentDownloadUrl = null;
 let pickerMode = "folder";
+let lastFocusedElement = null;
+let frameRatePresetButtons = [];
+
+const setDownloadLinkEnabled = (enabled) => {
+  if (!downloadLink) return;
+  downloadLink.setAttribute("aria-disabled", String(!enabled));
+};
+
+const applyTheme = (theme) => {
+  if (theme === "dark") {
+    rootElement.dataset.theme = "dark";
+  } else {
+    rootElement.dataset.theme = "light";
+  }
+};
+
+const storedTheme = localStorage.getItem("theme");
+const prefersDark =
+  typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-color-scheme: dark)")
+    : { matches: false };
+const initialTheme = storedTheme ?? (prefersDark.matches ? "dark" : "light");
+applyTheme(initialTheme);
+if (themeToggle) {
+  themeToggle.checked = initialTheme === "dark";
+  themeToggle.addEventListener("change", () => {
+    const nextTheme = themeToggle.checked ? "dark" : "light";
+    applyTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+  });
+
+  if (!storedTheme) {
+    const handlePrefersChange = (event) => {
+      const persistedTheme = localStorage.getItem("theme");
+      if (persistedTheme) return;
+      const nextTheme = event.matches ? "dark" : "light";
+      applyTheme(nextTheme);
+      themeToggle.checked = nextTheme === "dark";
+    };
+
+    if (typeof prefersDark.addEventListener === "function") {
+      prefersDark.addEventListener("change", handlePrefersChange);
+    } else if (typeof prefersDark.addListener === "function") {
+      prefersDark.addListener(handlePrefersChange);
+    }
+  }
+} else if (storedTheme) {
+  applyTheme(storedTheme);
+}
+
+const getFocusableElements = (container) => {
+  if (!container) return [];
+  const selectors =
+    'a[href]:not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  return Array.from(container.querySelectorAll(selectors)).filter((el) => {
+    const rect = el.getBoundingClientRect();
+    return !(rect.width === 0 && rect.height === 0);
+  });
+};
+
+const openSettings = () => {
+  if (!settingsPanel) return;
+  lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  settingsPanel.classList.add("open");
+  settingsPanel.removeAttribute("aria-hidden");
+  openSettingsButton?.setAttribute("aria-expanded", "true");
+  document.body.style.overflow = "hidden";
+  const focusable = getFocusableElements(settingsContent);
+  const target = focusable[0] ?? closeSettingsButton;
+  requestAnimationFrame(() => target?.focus());
+};
+
+const closeSettings = () => {
+  if (!settingsPanel) return;
+  settingsPanel.classList.remove("open");
+  settingsPanel.setAttribute("aria-hidden", "true");
+  openSettingsButton?.setAttribute("aria-expanded", "false");
+  document.body.style.overflow = "";
+  if (lastFocusedElement) {
+    requestAnimationFrame(() => lastFocusedElement?.focus());
+  }
+};
+
+openSettingsButton?.addEventListener("click", openSettings);
+closeSettingsButton?.addEventListener("click", closeSettings);
+settingsOverlay?.addEventListener("click", closeSettings);
+
+settingsPanel?.addEventListener("keydown", (event) => {
+  if (!settingsPanel.classList.contains("open")) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeSettings();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const focusable = getFocusableElements(settingsContent);
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey) {
+    if (document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    }
+  } else if (document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
-
-if (frameToggle && frameRateOptionsEl && frameRateInput) {
-  const syncFrameOptionsVisibility = () => {
-    const enabled = frameToggle.checked;
-    frameRateOptionsEl.classList.toggle("hidden", !enabled);
-    frameRateInput.disabled = !enabled;
-    if (trimFrameOverflowInput) {
-      trimFrameOverflowInput.disabled = !enabled;
-    }
-    if (frameRatePresetContainer) {
-      frameRatePresetContainer
-        .querySelectorAll("button")
-        .forEach((button) => {
-          button.disabled = !enabled;
-        });
-    }
-  };
-
-  syncFrameOptionsVisibility();
-  frameToggle.addEventListener("change", syncFrameOptionsVisibility);
-}
+setDownloadLinkEnabled(false);
 
 if (pickerToggle && openPickerButton) {
   const pickerOptions = Array.from(
@@ -123,19 +219,19 @@ if (autoModeToggle && modeInput) {
 }
 
 if (frameRatePresetContainer && frameRateInput) {
-  const presetButtons = Array.from(
-    frameRatePresetContainer.querySelectorAll(".frame-rate-chip[data-frame-rate]")
+  frameRatePresetButtons = Array.from(
+    frameRatePresetContainer.querySelectorAll(".chip[data-frame-rate]")
   );
 
   const activatePreset = (targetButton) => {
-    presetButtons.forEach((button) => {
+    frameRatePresetButtons.forEach((button) => {
       const isActive = button === targetButton;
       button.classList.toggle("active", isActive);
       button.setAttribute("aria-pressed", String(isActive));
     });
   };
 
-  presetButtons.forEach((button) => {
+  frameRatePresetButtons.forEach((button) => {
     if (!button.hasAttribute("aria-pressed")) {
       button.setAttribute("aria-pressed", String(button.classList.contains("active")));
     }
@@ -155,7 +251,7 @@ if (frameRatePresetContainer && frameRateInput) {
 
   const syncPresetFromInput = () => {
     const currentValue = Number(frameRateInput.value);
-    const matched = presetButtons.find((button) => {
+    const matched = frameRatePresetButtons.find((button) => {
       const presetValue = Number(button.dataset.frameRate);
       return button.dataset.frameRate !== "custom" && Number.isFinite(presetValue)
         ? Math.abs(presetValue - currentValue) < 1e-3
@@ -165,7 +261,9 @@ if (frameRatePresetContainer && frameRateInput) {
     if (matched) {
       activatePreset(matched);
     } else {
-      const customButton = presetButtons.find((button) => button.dataset.frameRate === "custom");
+      const customButton = frameRatePresetButtons.find(
+        (button) => button.dataset.frameRate === "custom"
+      );
       if (customButton) {
         activatePreset(customButton);
       }
@@ -174,6 +272,24 @@ if (frameRatePresetContainer && frameRateInput) {
 
   syncPresetFromInput();
   frameRateInput.addEventListener("input", syncPresetFromInput);
+}
+
+const syncFrameOptionsVisibility = () => {
+  if (!frameToggle || !frameRateInput) return;
+  const enabled = frameToggle.checked;
+  frameRateInput.disabled = !enabled;
+  frameRateControl?.classList.toggle("disabled", !enabled);
+  if (trimFrameOverflowInput) {
+    trimFrameOverflowInput.disabled = !enabled;
+  }
+  frameRatePresetButtons.forEach((button) => {
+    button.disabled = !enabled;
+  });
+};
+
+if (frameToggle && frameRateInput) {
+  syncFrameOptionsVisibility();
+  frameToggle.addEventListener("change", syncFrameOptionsVisibility);
 }
 
 function handleFileSelection(files) {
@@ -510,6 +626,7 @@ function showResults(result, mode) {
   currentDownloadUrl = URL.createObjectURL(blob);
   downloadLink.href = currentDownloadUrl;
   downloadLink.download = "output.srt";
+  setDownloadLinkEnabled(true);
 
   resultsSection.hidden = false;
 }
