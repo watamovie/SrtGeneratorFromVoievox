@@ -13,6 +13,7 @@ const adjustmentEl = document.getElementById("adjustment");
 const targetTotalEl = document.getElementById("targetTotal");
 const logEl = document.getElementById("log");
 const downloadLink = document.getElementById("downloadLink");
+const toggleMinimalViewButton = document.getElementById("toggleMinimalView");
 const frameToggle = document.getElementById("enableFrameLock");
 const frameRateOptionsEl = document.getElementById("frameRateOptions");
 const frameRateInput = document.getElementById("frameRate");
@@ -120,6 +121,23 @@ if (autoModeToggle && modeInput) {
 
   updateModeVisibility();
   autoModeToggle.addEventListener("change", updateModeVisibility);
+}
+
+if (toggleMinimalViewButton) {
+  const updateMinimalToggleLabel = (isMinimal) => {
+    toggleMinimalViewButton.textContent = isMinimal
+      ? "通常表示に戻す"
+      : "シンプル表示に切り替え";
+    toggleMinimalViewButton.setAttribute("aria-pressed", String(isMinimal));
+    toggleMinimalViewButton.classList.toggle("active", isMinimal);
+  };
+
+  updateMinimalToggleLabel(document.body.classList.contains("minimal-view"));
+
+  toggleMinimalViewButton.addEventListener("click", () => {
+    const isMinimal = document.body.classList.toggle("minimal-view");
+    updateMinimalToggleLabel(isMinimal);
+  });
 }
 
 if (frameRatePresetContainer && frameRateInput) {
