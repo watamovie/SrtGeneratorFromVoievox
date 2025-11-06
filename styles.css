@@ -65,6 +65,17 @@ a {
   font-size: 1.4rem;
 }
 
+.card-compact {
+  padding: clamp(1.75rem, 2vw, 2.25rem);
+}
+
+.lead-small {
+  color: var(--muted);
+  margin-top: 0.75rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
 .input-group {
   display: flex;
   flex-wrap: wrap;
@@ -75,6 +86,7 @@ a {
 
 .picker-control {
   align-items: stretch;
+  justify-content: center;
 }
 
 .picker-toggle {
@@ -105,7 +117,8 @@ a {
 }
 
 .picker-control .button {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  min-width: min(240px, 100%);
 }
 
 .button {
@@ -171,11 +184,84 @@ a {
 
 .selected-files.empty {
   color: var(--muted);
+  text-align: center;
 }
 
 .settings-form {
   display: grid;
   gap: 1.5rem;
+}
+
+.download-button {
+  justify-self: center;
+  min-width: min(320px, 100%);
+  font-size: 1rem;
+}
+
+.download-button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.advanced-settings {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.35);
+  padding: 0.5rem 1rem;
+}
+
+.advanced-settings[open] {
+  padding-bottom: 1.5rem;
+}
+
+.advanced-settings summary {
+  list-style: none;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+}
+
+.advanced-settings summary::marker,
+.advanced-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-settings summary:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.65);
+  outline-offset: 6px;
+  border-radius: 0.75rem;
+}
+
+.advanced-settings summary::after {
+  content: "";
+  width: 0.65rem;
+  height: 0.65rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+}
+
+.advanced-settings[open] summary::after {
+  transform: rotate(225deg);
+}
+
+.advanced-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.advanced-block {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.advanced-block h3 {
+  margin: 0;
+  font-size: 1.1rem;
 }
 
 fieldset {
@@ -349,6 +435,12 @@ legend {
   font-size: 0.85rem;
   line-height: 1.6;
   white-space: pre-wrap;
+}
+
+@media (min-width: 720px) {
+  .advanced-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .app-footer {

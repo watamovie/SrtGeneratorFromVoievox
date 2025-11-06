@@ -13,6 +13,8 @@ const adjustmentEl = document.getElementById("adjustment");
 const targetTotalEl = document.getElementById("targetTotal");
 const logEl = document.getElementById("log");
 const downloadLink = document.getElementById("downloadLink");
+const generateButton = document.getElementById("generateButton");
+const postSelectHint = document.getElementById("postSelectHint");
 const frameToggle = document.getElementById("enableFrameLock");
 const frameRateOptionsEl = document.getElementById("frameRateOptions");
 const frameRateInput = document.getElementById("frameRate");
@@ -182,6 +184,14 @@ function handleFileSelection(files) {
   if (!storedFiles.length) {
     selectedFiles.textContent = "ファイルが選択されていません";
     selectedFiles.classList.add("empty");
+    if (generateButton) {
+      generateButton.hidden = true;
+      generateButton.disabled = true;
+      generateButton.textContent = "SRTを生成してダウンロード";
+    }
+    if (postSelectHint) {
+      postSelectHint.hidden = true;
+    }
     return;
   }
 
@@ -193,6 +203,16 @@ function handleFileSelection(files) {
 
   selectedFiles.textContent = list;
   selectedFiles.classList.remove("empty");
+
+  if (generateButton) {
+    generateButton.hidden = false;
+    generateButton.disabled = false;
+    generateButton.textContent = "SRTを生成してダウンロード";
+  }
+
+  if (postSelectHint) {
+    postSelectHint.hidden = false;
+  }
 }
 
 folderInput?.addEventListener("change", (event) => {
@@ -219,6 +239,13 @@ settingsForm.addEventListener("submit", async (event) => {
   if (!storedFiles.length) {
     alert("先に音声とテキストのファイルを選択してください。");
     return;
+  }
+
+  let originalButtonLabel = "";
+  if (generateButton) {
+    originalButtonLabel = generateButton.textContent;
+    generateButton.disabled = true;
+    generateButton.textContent = "生成中...";
   }
 
   try {
@@ -258,6 +285,11 @@ settingsForm.addEventListener("submit", async (event) => {
   } catch (error) {
     console.error(error);
     alert(`エラーが発生しました: ${error.message}`);
+  } finally {
+    if (generateButton) {
+      generateButton.disabled = false;
+      generateButton.textContent = originalButtonLabel || "SRTを生成してダウンロード";
+    }
   }
 });
 
