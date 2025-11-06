@@ -15,7 +15,17 @@
     </header>
 
     <main class="app-main">
-      <section class="card">
+      <div class="view-toggle">
+        <button
+          type="button"
+          id="toggleMinimalView"
+          class="button button-secondary"
+          aria-pressed="false"
+        >
+          シンプル表示に切り替え
+        </button>
+      </div>
+      <section class="card" id="fileCard">
         <h2>1. ファイルを読み込む</h2>
         <p>
           フォルダごとまとめて処理するか、複数ファイルを個別に選択するかをトグルで切り替えて利用してください。
