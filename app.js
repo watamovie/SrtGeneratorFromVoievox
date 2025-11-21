@@ -4,6 +4,7 @@ const settingsStep = document.getElementById("settingsStep");
 const resultsSection = document.getElementById("results");
 const workflowNav = document.getElementById("workflowNav");
 const workflowButtons = document.querySelectorAll("[data-step-button]");
+const logoLink = document.getElementById("logoHome");
 
 const folderInput = document.getElementById("folderInput");
 const fileInput = document.getElementById("fileInput");
@@ -14,6 +15,8 @@ const reuploadFilesButton = document.getElementById("reuploadFilesButton");
 const regenerateButton = document.getElementById("regenerateButton");
 
 const selectedFiles = document.getElementById("selectedFiles");
+const selectedSummary = document.getElementById("selectedSummary");
+const clearSelectionButton = document.getElementById("clearSelectionButton");
 const settingsForm = document.getElementById("settingsForm");
 const modeInput = document.getElementById("modeInput");
 const autoModeToggle = document.getElementById("autoModeToggle");
@@ -43,6 +46,32 @@ const stepOrder = ["upload", "settings", "results"];
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
+
+const resetSelection = ({ focusUpload = false, keepAutoProcess = false } = {}) => {
+  if (!keepAutoProcess) {
+    autoProcessOnSelection = false;
+  }
+  storedFiles = [];
+  hasResults = false;
+  selectedFiles.textContent = "ファイルが選択されていません";
+  selectedFiles.classList.add("empty");
+  if (selectedSummary) {
+    selectedSummary.textContent = "ファイルが選択されていません";
+  }
+  if (clearSelectionButton) {
+    clearSelectionButton.hidden = true;
+  }
+
+  if (fileInput) fileInput.value = "";
+  if (folderInput) folderInput.value = "";
+
+  setWorkflowMode(false);
+  goToStep("upload", { scroll: focusUpload });
+  if (focusUpload) {
+    focusUploadStep();
+    highlightDropzone();
+  }
+};
 
 const focusUploadStep = () => {
   uploadStep?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -106,6 +135,11 @@ const highlightDropzone = () => {
   dropzone?.classList.add("active");
   setTimeout(() => dropzone?.classList.remove("active"), 800);
 };
+
+logoLink?.addEventListener("click", (event) => {
+  event.preventDefault();
+  resetSelection({ focusUpload: true });
+});
 
 if (frameToggle && frameRateOptionsEl && frameRateInput) {
   const syncFrameOptionsVisibility = () => {
@@ -210,6 +244,12 @@ const handleFileSelection = (files) => {
   if (!storedFiles.length) {
     selectedFiles.textContent = "ファイルが選択されていません";
     selectedFiles.classList.add("empty");
+    if (selectedSummary) {
+      selectedSummary.textContent = "ファイルが選択されていません";
+    }
+    if (clearSelectionButton) {
+      clearSelectionButton.hidden = true;
+    }
     return;
   }
 
@@ -221,6 +261,12 @@ const handleFileSelection = (files) => {
 
   selectedFiles.textContent = list;
   selectedFiles.classList.remove("empty");
+  if (selectedSummary) {
+    selectedSummary.textContent = `${storedFiles.length}件を読み込みました`;
+  }
+  if (clearSelectionButton) {
+    clearSelectionButton.hidden = false;
+  }
   hasResults = false;
   goToStep("settings");
 
@@ -331,6 +377,10 @@ fileInput?.addEventListener("change", (event) => {
   }
 });
 
+clearSelectionButton?.addEventListener("click", () => {
+  resetSelection({ focusUpload: true });
+});
+
 jumpToUploadButton?.addEventListener("click", () => {
   goToStep("upload");
   focusUploadStep();
@@ -339,10 +389,7 @@ jumpToUploadButton?.addEventListener("click", () => {
 
 reuploadFilesButton?.addEventListener("click", () => {
   autoProcessOnSelection = true;
-  hasResults = false;
-  goToStep("upload");
-  focusUploadStep();
-  highlightDropzone();
+  resetSelection({ focusUpload: true, keepAutoProcess: true });
 });
 
 regenerateButton?.addEventListener("click", () => {

@@ -410,6 +410,12 @@ a {
   transform: translateY(0);
 }
 
+.button.button-small {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 .selected-files {
   margin-top: 1rem;
   border: 1px dashed var(--border);
@@ -425,6 +431,19 @@ a {
 
 .selected-files.empty {
   color: var(--muted);
+}
+
+.selection-header {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.selection-header p {
+  margin: 0;
+  font-weight: 700;
 }
 
 .settings-form {

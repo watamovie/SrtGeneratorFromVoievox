@@ -9,7 +9,7 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="logo" href="#top">
+      <a class="logo" href="#top" id="logoHome">
         <span class="brand-mark" aria-hidden="true">
           <img src="favicon.svg" alt="" />
         </span>
@@ -32,9 +32,9 @@
         <p class="eyebrow">VOICEVOX × SRT</p>
         <div class="hero-grid">
           <div class="hero-copy">
-            <h1>数クリックでSRT字幕を生成可能</h1>
+            <h1>数クリックでSRT字幕を仕上げる</h1>
             <p class="lead">
-              音声（.wav）とテキスト（.txt）のペアをまとめて読み込むだけ。フレーム合わせや全体時間の微調整も、自動で整った字幕ファイルをブラウザだけで作成できます。
+              音声（.wav）とテキスト（.txt）をまとめて読み込めば、フレーム合わせや合計時間の微調整までブラウザだけで完結。整ったSRTをすぐに出力できます。
             </p>
             <div class="hero-actions">
               <a class="button button-primary" href="#uploadStep">ファイルを読み込む</a>
@@ -88,7 +88,7 @@
         >
           <div class="drop-inner">
             <p class="drop-title">ここにファイル/フォルダをドロップ</p>
-            <p class="muted">同名の .wav と .txt をセットで読み込みます。</p>
+            <p class="muted">ドラッグ＆ドロップ、または下のボタンからまとめて選択できます。</p>
             <div class="drop-actions">
               <button type="button" id="selectFilesButton" class="button button-primary">
                 ファイルを選択
@@ -97,13 +97,19 @@
                 フォルダを選択
               </button>
             </div>
-            <p class="hint">選択したデータはブラウザ内でのみ処理され、アップロードされません。</p>
+            <p class="hint">同名の .wav と .txt をセットで読み込み、ブラウザ内のみで処理します。</p>
           </div>
         </div>
 
         <input id="fileInput" type="file" multiple accept=".wav,.txt" hidden />
         <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
 
+        <div class="selection-header">
+          <p id="selectedSummary" class="muted">ファイルが選択されていません</p>
+          <button type="button" id="clearSelectionButton" class="button button-ghost button-small" hidden>
+            選択をクリア
+          </button>
+        </div>
         <div id="selectedFiles" class="selected-files empty" aria-live="polite">
           ファイルが選択されていません
         </div>
@@ -275,13 +281,13 @@
           <li>
             <strong>台本を入力して書き出す</strong>
             <p>
-              台本を入力してキャラクターとセリフを設定し、メニューの「ファイル」→「音声書き出し」を選択。保存フォルダを指定すると、wavと同じ場所にセリフが1行ずつ書かれたtxtファイルが出力されます。
+              台本を入力してキャラクターとセリフを設定し、メニューの「ファイル」→「音声書き出し」を選択。保存先を指定すると、wavと同じ場所にセリフが1行ずつ書かれたtxtファイルが出力されます。
             </p>
           </li>
           <li>
             <strong>本サイトで字幕を生成</strong>
             <p>
-              「ファイルを選択」ボタンから生成したwavとtxtをまとめてアップロードし、「SRTを生成してダウンロード」をクリックするだけで字幕ファイルが完成します。
+              「ファイルを選択」またはドラッグ＆ドロップで生成したwavとtxtをまとめて読み込み、「SRTを生成」をクリックするだけで字幕ファイルが完成します。
             </p>
           </li>
           <li>
@@ -291,7 +297,7 @@
             </p>
           </li>
         </ol>
-        <p class="hint">タイミング調整いらずで、数分でナレーション付き動画の字幕が整います。</p>
+        <p class="hint">タイミング調整いらずで、数分で字幕付きの動画素材が整います。</p>
       </section>
 
       <section class="card info-card" id="contact">
