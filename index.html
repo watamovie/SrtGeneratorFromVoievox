@@ -4,14 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Voievox SRT ジェネレーター</title>
+    <link rel="icon" href="assets/srt-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="assets/srt-icon.svg" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="app-header" id="top">
-      <h1>SRT字幕自動生成ツール</h1>
+      <div class="header-inner">
+        <div class="brand">
+          <img src="assets/srt-icon.svg" alt="SRTジェネレーターのアイコン" class="brand-icon" />
+          <div>
+            <p class="brand-kicker">Voievox ツールスイート</p>
+            <h1>SRT字幕自動生成ツール</h1>
+          </div>
+        </div>
+        <nav class="header-nav" aria-label="メイン">
+          <a href="#uploadStep">ファイル</a>
+          <a href="#settingsStep">設定</a>
+          <a href="#results">結果</a>
+        </nav>
+      </div>
       <p class="lead">
         音声（.wav）とテキスト（.txt）のペアから、フレームに揃ったSRT字幕を生成します。
       </p>
+      <div class="header-actions">
+        <a class="button button-primary" href="#uploadStep">今すぐ始める</a>
+        <a class="button button-secondary" href="#settingsStep">設定を確認</a>
+      </div>
     </header>
 
     <main class="app-main">
