@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Srt document icon">
+  <defs>
+    <linearGradient id="paper" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#fdfdf6" />
+      <stop offset="100%" stop-color="#f3f0e4" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#8dd7a0" />
+  <path
+    d="M132 82h192l78 74v268a30 30 0 0 1-30 30H132a30 30 0 0 1-30-30V112a30 30 0 0 1 30-30Z"
+    fill="url(#paper)"
+    stroke="#0f7c3b"
+    stroke-width="16"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M324 82v82c0 11 9 20 20 20h68"
+    fill="none"
+    stroke="#0f7c3b"
+    stroke-width="16"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M168 226c0-12 9-22 20-22h12c12 0 20 10 20 22v8c0 12-8 22-20 22h-12v24"
+    fill="none"
+    stroke="#0f7c3b"
+    stroke-width="16"
+    stroke-linecap="round"
+  />
+  <path
+    d="M254 214h60"
+    stroke="#0f7c3b"
+    stroke-width="18"
+    stroke-linecap="round"
+  />
+  <path
+    d="M284 214v62"
+    stroke="#0f7c3b"
+    stroke-width="18"
+    stroke-linecap="round"
+  />
+  <path
+    d="M254 276h60"
+    stroke="#0f7c3b"
+    stroke-width="18"
+    stroke-linecap="round"
+  />
+  <path
+    d="M352 214h-12c-12 0-20 10-20 22v56"
+    fill="none"
+    stroke="#0f7c3b"
+    stroke-width="16"
+    stroke-linecap="round"
+  />
+  <path
+    d="M352 292h-36"
+    stroke="#0f7c3b"
+    stroke-width="16"
+    stroke-linecap="round"
+  />
+  <path
+    d="M162 338h188"
+    stroke="#0f7c3b"
+    stroke-width="16"
+    stroke-linecap="round"
+  />
+  <path
+    d="M162 378h116"
+    stroke="#0f7c3b"
+    stroke-width="16"
+    stroke-linecap="round"
+  />
+</svg>

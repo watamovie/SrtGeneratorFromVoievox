@@ -4,14 +4,58 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Voievox SRT ジェネレーター</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="app-header" id="top">
-      <h1>SRT字幕自動生成ツール</h1>
-      <p class="lead">
-        音声（.wav）とテキスト（.txt）のペアから、フレームに揃ったSRT字幕を生成します。
-      </p>
+      <div class="navbar">
+        <div class="brand">
+          <img src="assets/favicon.svg" alt="Voievoxロゴ" class="brand-mark" />
+          <div class="brand-text">
+            <span class="brand-kicker">Voievox</span>
+            <strong>SRT ジェネレーター</strong>
+          </div>
+        </div>
+        <nav class="nav-links" aria-label="主要ナビゲーション">
+          <a href="#uploadStep">読み込み</a>
+          <a href="#settingsStep">設定</a>
+          <a href="#results">結果</a>
+          <a href="#contact">お問い合わせ</a>
+        </nav>
+        <div class="nav-actions">
+          <a class="button button-secondary button-compact" href="#uploadStep">今すぐ始める</a>
+        </div>
+      </div>
+
+      <div class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">ブラウザだけで完結</p>
+          <h1>SRT字幕自動生成ツール</h1>
+          <p class="lead">
+            音声（.wav）とテキスト（.txt）のペアから、フレームに揃ったSRT字幕を生成します。
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#uploadStep">ファイルを読み込む</a>
+            <a class="button button-ghost" href="#terms">利用規約を見る</a>
+          </div>
+          <div class="hero-highlights" aria-label="特徴">
+            <span>ローカルで安全</span>
+            <span>フレーム揃え対応</span>
+            <span>カスタム調整も可能</span>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-card">
+            <img src="assets/favicon.svg" alt="" class="hero-icon" />
+            <div>
+              <p class="hero-meta">SRTフロー</p>
+              <p class="hero-title">音声とテキストから</p>
+              <p class="hero-sub">フレーム精度で字幕を作成</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
 
     <main class="app-main">
