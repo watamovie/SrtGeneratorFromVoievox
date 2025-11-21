@@ -21,6 +21,9 @@ const frameRatePresetContainer = document.getElementById("frameRatePresets");
 const frameRateStatEl = document.getElementById("frameRateStat");
 const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
 const frameDriftEl = document.getElementById("frameDrift");
+const dropZone = document.getElementById("dropZone");
+const importStatus = document.getElementById("importStatus");
+const subtitleListEl = document.getElementById("subtitleList");
 
 const manualSettings = document.querySelector('.mode-settings[data-mode="manual"]');
 const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
@@ -31,6 +34,7 @@ let pickerMode = "folder";
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
+updateImportStatus("waiting", "インポート待機中");
 
 if (frameToggle && frameRateOptionsEl && frameRateInput) {
   const syncFrameOptionsVisibility = () => {
@@ -51,6 +55,13 @@ if (frameToggle && frameRateOptionsEl && frameRateInput) {
 
   syncFrameOptionsVisibility();
   frameToggle.addEventListener("change", syncFrameOptionsVisibility);
+}
+
+function updateImportStatus(state, message) {
+  if (!importStatus) return;
+  importStatus.textContent = message;
+  importStatus.classList.remove("status-waiting", "status-success", "status-warning");
+  importStatus.classList.add(`status-${state}`);
 }
 
 if (pickerToggle && openPickerButton) {
@@ -98,6 +109,126 @@ if (pickerToggle && openPickerButton) {
   folderInput?.addEventListener("change", () => setPickerMode("folder"));
   fileInput?.addEventListener("change", () => setPickerMode("file"));
 }
+
+async function collectDroppedFiles(dataTransfer) {
+  if (!dataTransfer) return [];
+
+  if (dataTransfer.items?.length) {
+    const entries = Array.from(dataTransfer.items)
+      .filter((item) => item.kind === "file")
+      .map((item) => item.webkitGetAsEntry?.())
+      .filter(Boolean);
+
+    if (entries.length) {
+      const allFiles = await Promise.all(entries.map((entry) => traverseEntry(entry)));
+      return allFiles.flat();
+    }
+  }
+
+  return Array.from(dataTransfer.files || []);
+}
+
+async function traverseEntry(entry, path = "") {
+  return new Promise((resolve, reject) => {
+    if (entry.isFile) {
+      entry.file((file) => {
+        const relativePath = path ? `${path}/${file.name}` : file.name;
+        let fileWithPath = file;
+
+        try {
+          Object.defineProperty(fileWithPath, "webkitRelativePath", { value: relativePath });
+        } catch (error) {
+          fileWithPath = new File([file], file.name, {
+            type: file.type,
+            lastModified: file.lastModified,
+          });
+          Object.defineProperty(fileWithPath, "webkitRelativePath", { value: relativePath });
+        }
+
+        resolve([fileWithPath]);
+      }, reject);
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      const dirPath = path ? `${path}/${entry.name}` : entry.name;
+
+      const readEntries = () =>
+        new Promise((res, rej) => {
+          reader.readEntries(async (entries) => {
+            try {
+              const nested = await Promise.all(entries.map((child) => traverseEntry(child, dirPath)));
+              res(nested.flat());
+            } catch (error) {
+              rej(error);
+            }
+          }, rej);
+        });
+
+      const gatherAll = async () => {
+        const files = [];
+        let batch;
+        do {
+          batch = await readEntries();
+          files.push(...batch);
+        } while (batch.length);
+        return files;
+      };
+
+      gatherAll().then(resolve).catch(reject);
+    } else {
+      resolve([]);
+    }
+  });
+}
+
+if (dropZone) {
+  const stop = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  ["dragenter", "dragover"].forEach((type) => {
+    dropZone.addEventListener(type, (event) => {
+      stop(event);
+      dropZone.classList.add("dragover");
+    });
+  });
+
+  ["dragleave", "dragexit"].forEach((type) => {
+    dropZone.addEventListener(type, (event) => {
+      stop(event);
+      dropZone.classList.remove("dragover");
+    });
+  });
+
+  dropZone.addEventListener("drop", async (event) => {
+    stop(event);
+    dropZone.classList.remove("dragover");
+
+    const files = await collectDroppedFiles(event.dataTransfer);
+    if (files.length) {
+      handleFileSelection(files);
+      if (folderInput) folderInput.value = "";
+      if (fileInput) fileInput.value = "";
+    } else {
+      updateImportStatus("warning", "ファイルを取得できませんでした");
+    }
+  });
+
+  dropZone.addEventListener("click", () => openPickerButton?.click());
+  dropZone.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openPickerButton?.click();
+    }
+  });
+}
+
+document.addEventListener("dragover", (event) => event.preventDefault());
+document.addEventListener("drop", (event) => {
+  if (!dropZone?.contains(event.target)) {
+    event.preventDefault();
+  }
+});
 
 if (autoModeToggle && modeInput) {
   const updateModeVisibility = () => {
@@ -182,6 +313,7 @@ function handleFileSelection(files) {
   if (!storedFiles.length) {
     selectedFiles.textContent = "ファイルが選択されていません";
     selectedFiles.classList.add("empty");
+    updateImportStatus("waiting", "インポート待機中");
     return;
   }
 
@@ -193,6 +325,7 @@ function handleFileSelection(files) {
 
   selectedFiles.textContent = list;
   selectedFiles.classList.remove("empty");
+  updateImportStatus("success", `${storedFiles.length} 件のファイルをインポートしました`);
 }
 
 folderInput?.addEventListener("change", (event) => {
@@ -469,6 +602,49 @@ async function processPairs({
   };
 }
 
+function renderSubtitleList(srtContent) {
+  if (!subtitleListEl) return;
+
+  subtitleListEl.innerHTML = "";
+  const cleaned = (srtContent || "").trim();
+
+  if (!cleaned) {
+    const emptyItem = document.createElement("li");
+    emptyItem.className = "subtitle-empty";
+    emptyItem.textContent = "字幕はまだ生成されていません。";
+    subtitleListEl.appendChild(emptyItem);
+    return;
+  }
+
+  const blocks = cleaned.split(/\n\n+/);
+  blocks.forEach((block) => {
+    const lines = block.trim().split(/\n+/);
+    if (!lines.length) return;
+
+    if (/^\d+$/.test(lines[0])) {
+      lines.shift();
+    }
+
+    const timeIndex = lines.findIndex((line) => line.includes("-->"));
+    const timeLine = timeIndex >= 0 ? lines.splice(timeIndex, 1)[0] : "時間情報なし";
+    const textBody = lines.join(" / ") || "(テキストなし)";
+
+    const row = document.createElement("li");
+    row.className = "subtitle-row";
+
+    const timeEl = document.createElement("div");
+    timeEl.className = "subtitle-time";
+    timeEl.textContent = timeLine.trim();
+
+    const textEl = document.createElement("div");
+    textEl.className = "subtitle-text";
+    textEl.textContent = textBody;
+
+    row.append(timeEl, textEl);
+    subtitleListEl.appendChild(row);
+  });
+}
+
 function showResults(result, mode) {
   clipCountEl.textContent = result.clipCount.toString();
   originalTotalEl.textContent = `${result.originalTotal.toFixed(2)} 秒`;
@@ -494,6 +670,8 @@ function showResults(result, mode) {
     frameAlignedTotalEl.textContent = "-";
     frameDriftEl.textContent = "-";
   }
+
+  renderSubtitleList(result.srtContent);
 
   const messages = [...result.log];
   if (result.warnings?.length) {
