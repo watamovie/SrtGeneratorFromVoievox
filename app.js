@@ -3,6 +3,8 @@ const fileInput = document.getElementById("fileInput");
 const openPickerButton = document.getElementById("openPickerButton");
 const pickerToggle = document.getElementById("pickerToggle");
 const selectedFiles = document.getElementById("selectedFiles");
+const dropZone = document.getElementById("dropZone");
+const importState = document.getElementById("importState");
 const settingsForm = document.getElementById("settingsForm");
 const modeInput = document.getElementById("modeInput");
 const autoModeToggle = document.getElementById("autoModeToggle");
@@ -21,16 +23,31 @@ const frameRatePresetContainer = document.getElementById("frameRatePresets");
 const frameRateStatEl = document.getElementById("frameRateStat");
 const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
 const frameDriftEl = document.getElementById("frameDrift");
+const subtitleTableBody = document.getElementById("subtitleTableBody");
+const tableSummary = document.getElementById("tableSummary");
 
 const manualSettings = document.querySelector('.mode-settings[data-mode="manual"]');
 const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
 
 let storedFiles = [];
+let lastEntries = [];
 let currentDownloadUrl = null;
 let pickerMode = "folder";
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
+updateImportStatus(0);
+
+function updateImportStatus(count) {
+  if (!importState) return;
+  if (count > 0) {
+    importState.textContent = `${count} 件選択済み`;
+    importState.classList.add("ready");
+  } else {
+    importState.textContent = "未選択";
+    importState.classList.remove("ready");
+  }
+}
 
 if (frameToggle && frameRateOptionsEl && frameRateInput) {
   const syncFrameOptionsVisibility = () => {
@@ -97,6 +114,40 @@ if (pickerToggle && openPickerButton) {
   fileInput?.addEventListener("click", () => syncModeFromInput("file"));
   folderInput?.addEventListener("change", () => setPickerMode("folder"));
   fileInput?.addEventListener("change", () => setPickerMode("file"));
+}
+
+const stopDragDefaults = (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+};
+
+if (dropZone) {
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      stopDragDefaults(event);
+      dropZone.classList.add("is-drag-over");
+    });
+  });
+
+  ["dragleave", "drop"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      stopDragDefaults(event);
+      dropZone.classList.remove("is-drag-over");
+    });
+  });
+
+  dropZone.addEventListener("drop", async (event) => {
+    const items = event.dataTransfer?.items;
+    try {
+      const files = items?.length
+        ? await collectFilesFromDataTransferItems(items)
+        : Array.from(event.dataTransfer?.files ?? []);
+      handleFileSelection(files);
+    } catch (error) {
+      console.error(error);
+      alert("ドロップされたフォルダ/ファイルの読み込み中にエラーが発生しました。");
+    }
+  });
 }
 
 if (autoModeToggle && modeInput) {
@@ -176,14 +227,78 @@ if (frameRatePresetContainer && frameRateInput) {
   frameRateInput.addEventListener("input", syncPresetFromInput);
 }
 
+function decorateRelativePath(file, relativePath) {
+  if (relativePath && !file.webkitRelativePath) {
+    Object.defineProperty(file, "webkitRelativePath", {
+      value: relativePath,
+      configurable: true,
+      writable: false,
+    });
+  }
+  return file;
+}
+
+async function traverseEntry(entry, parentPath = "") {
+  const relativePath = parentPath ? `${parentPath}/${entry.name}` : entry.name;
+
+  if (entry.isFile) {
+    return new Promise((resolve, reject) => {
+      entry.file(
+        (file) => resolve([decorateRelativePath(file, relativePath)]),
+        (error) => reject(error)
+      );
+    });
+  }
+
+  if (entry.isDirectory) {
+    const reader = entry.createReader();
+    const files = [];
+
+    const readAllEntries = async () => {
+      const entries = await new Promise((resolve, reject) => {
+        reader.readEntries(resolve, reject);
+      });
+
+      if (!entries.length) return;
+      for (const childEntry of entries) {
+        files.push(...(await traverseEntry(childEntry, relativePath)));
+      }
+      await readAllEntries();
+    };
+
+    await readAllEntries();
+    return files;
+  }
+
+  return [];
+}
+
+async function collectFilesFromDataTransferItems(items) {
+  const files = [];
+  for (const item of Array.from(items)) {
+    const entry = item.webkitGetAsEntry?.();
+    if (entry) {
+      files.push(...(await traverseEntry(entry)));
+    } else {
+      const file = item.getAsFile();
+      if (file) files.push(file);
+    }
+  }
+  return files;
+}
+
 function handleFileSelection(files) {
   storedFiles = Array.from(files);
 
   if (!storedFiles.length) {
     selectedFiles.textContent = "ファイルが選択されていません";
     selectedFiles.classList.add("empty");
+    updateImportStatus(0);
     return;
   }
+
+  updateImportStatus(storedFiles.length);
+  lastEntries = [];
 
   const list = storedFiles
     .slice()
@@ -376,6 +491,7 @@ async function processPairs({
   let currentFrame = 0;
   const lines = [];
   const log = [];
+  const entries = [];
 
   pairs.forEach((pair, index) => {
     const adjustedDuration = Math.max(pair.duration + adjustment, 0);
@@ -415,6 +531,13 @@ async function processPairs({
     const endTime = formatTime(endSeconds);
 
     lines.push(`${index + 1}\n${startTime} --> ${endTime}\n${pair.dialogue}\n`);
+    entries.push({
+      index: index + 1,
+      baseName: pair.baseName,
+      startTime,
+      endTime,
+      dialogue: pair.dialogue,
+    });
 
     const parts = [`原音 ${pair.duration.toFixed(3)}s`];
     if (Math.abs(pair.duration - adjustedDuration) > 1e-6) {
@@ -466,6 +589,7 @@ async function processPairs({
       drift: timelineDrift,
       trimOverflow,
     },
+    entries,
   };
 }
 
@@ -503,6 +627,8 @@ function showResults(result, mode) {
 
   logEl.textContent = messages.join("\n");
 
+  renderSubtitleTable(result.entries ?? []);
+
   const blob = new Blob([result.srtContent], { type: "text/plain;charset=utf-8" });
   if (currentDownloadUrl) {
     URL.revokeObjectURL(currentDownloadUrl);
@@ -512,4 +638,44 @@ function showResults(result, mode) {
   downloadLink.download = "output.srt";
 
   resultsSection.hidden = false;
+}
+
+function renderSubtitleTable(entries = []) {
+  lastEntries = entries;
+  if (!subtitleTableBody || !tableSummary) return;
+
+  subtitleTableBody.innerHTML = "";
+  tableSummary.textContent = `${entries.length} 件`;
+
+  if (!entries.length) return;
+
+  const fragment = document.createDocumentFragment();
+
+  entries.forEach((entry) => {
+    const row = document.createElement("tr");
+
+    const indexCell = document.createElement("td");
+    indexCell.textContent = entry.index;
+    row.appendChild(indexCell);
+
+    const nameCell = document.createElement("td");
+    nameCell.textContent = `${entry.baseName}.wav`;
+    row.appendChild(nameCell);
+
+    const startCell = document.createElement("td");
+    startCell.textContent = entry.startTime;
+    row.appendChild(startCell);
+
+    const endCell = document.createElement("td");
+    endCell.textContent = entry.endTime;
+    row.appendChild(endCell);
+
+    const textCell = document.createElement("td");
+    textCell.textContent = entry.dialogue;
+    row.appendChild(textCell);
+
+    fragment.appendChild(row);
+  });
+
+  subtitleTableBody.appendChild(fragment);
 }
