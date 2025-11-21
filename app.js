@@ -1,12 +1,20 @@
+const dropzone = document.getElementById("dropzone");
+const uploadStep = document.getElementById("uploadStep");
+const settingsStep = document.getElementById("settingsStep");
+const resultsSection = document.getElementById("results");
+
 const folderInput = document.getElementById("folderInput");
 const fileInput = document.getElementById("fileInput");
-const openPickerButton = document.getElementById("openPickerButton");
-const pickerToggle = document.getElementById("pickerToggle");
+const selectFilesButton = document.getElementById("selectFilesButton");
+const selectFolderButton = document.getElementById("selectFolderButton");
+const jumpToUploadButton = document.getElementById("jumpToUpload");
+const reuploadFilesButton = document.getElementById("reuploadFilesButton");
+const regenerateButton = document.getElementById("regenerateButton");
+
 const selectedFiles = document.getElementById("selectedFiles");
 const settingsForm = document.getElementById("settingsForm");
 const modeInput = document.getElementById("modeInput");
 const autoModeToggle = document.getElementById("autoModeToggle");
-const resultsSection = document.getElementById("results");
 const clipCountEl = document.getElementById("clipCount");
 const originalTotalEl = document.getElementById("originalTotal");
 const adjustmentEl = document.getElementById("adjustment");
@@ -27,15 +35,33 @@ const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
 
 let storedFiles = [];
 let currentDownloadUrl = null;
-let pickerMode = "folder";
+let autoProcessOnSelection = false;
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
 
+const focusUploadStep = () => {
+  uploadStep?.scrollIntoView({ behavior: "smooth", block: "start" });
+  dropzone?.focus({ preventScroll: true });
+};
+
+const showSettingsStep = ({ scroll = true } = {}) => {
+  if (settingsStep) {
+    settingsStep.hidden = false;
+    if (scroll) {
+      settingsStep.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+};
+
+const highlightDropzone = () => {
+  dropzone?.classList.add("active");
+  setTimeout(() => dropzone?.classList.remove("active"), 800);
+};
+
 if (frameToggle && frameRateOptionsEl && frameRateInput) {
   const syncFrameOptionsVisibility = () => {
     const enabled = frameToggle.checked;
-    frameRateOptionsEl.classList.toggle("hidden", !enabled);
     frameRateInput.disabled = !enabled;
     if (trimFrameOverflowInput) {
       trimFrameOverflowInput.disabled = !enabled;
@@ -51,52 +77,6 @@ if (frameToggle && frameRateOptionsEl && frameRateInput) {
 
   syncFrameOptionsVisibility();
   frameToggle.addEventListener("change", syncFrameOptionsVisibility);
-}
-
-if (pickerToggle && openPickerButton) {
-  const pickerOptions = Array.from(
-    pickerToggle.querySelectorAll(".picker-option[data-picker-mode]")
-  );
-
-  const setPickerMode = (mode) => {
-    if (!mode) return;
-    pickerMode = mode;
-    pickerOptions.forEach((button) => {
-      const isActive = button.dataset.pickerMode === mode;
-      button.classList.toggle("active", isActive);
-      button.setAttribute("aria-pressed", String(isActive));
-    });
-  };
-
-  const activeButton = pickerOptions.find((button) => button.classList.contains("active"));
-  setPickerMode(activeButton?.dataset.pickerMode ?? "folder");
-
-  pickerOptions.forEach((button) => {
-    button.addEventListener("click", () => {
-      const mode = button.dataset.pickerMode;
-      if (mode && mode !== pickerMode) {
-        setPickerMode(mode);
-      }
-    });
-  });
-
-  openPickerButton.addEventListener("click", () => {
-    if (pickerMode === "folder") {
-      folderInput?.click();
-    } else {
-      fileInput?.click();
-    }
-  });
-
-  const syncModeFromInput = (mode) => {
-    if (!mode || mode === pickerMode) return;
-    setPickerMode(mode);
-  };
-
-  folderInput?.addEventListener("click", () => syncModeFromInput("folder"));
-  fileInput?.addEventListener("click", () => syncModeFromInput("file"));
-  folderInput?.addEventListener("change", () => setPickerMode("folder"));
-  fileInput?.addEventListener("change", () => setPickerMode("file"));
 }
 
 if (autoModeToggle && modeInput) {
@@ -176,7 +156,7 @@ if (frameRatePresetContainer && frameRateInput) {
   frameRateInput.addEventListener("input", syncPresetFromInput);
 }
 
-function handleFileSelection(files) {
+const handleFileSelection = (files) => {
   storedFiles = Array.from(files);
 
   if (!storedFiles.length) {
@@ -193,31 +173,141 @@ function handleFileSelection(files) {
 
   selectedFiles.textContent = list;
   selectedFiles.classList.remove("empty");
+  showSettingsStep();
+
+  if (autoProcessOnSelection) {
+    autoProcessOnSelection = false;
+    processCurrentSelection();
+  }
+};
+
+const extractFilesFromItems = async (items) => {
+  const traverseEntry = (entry, path = "") =>
+    new Promise((resolve, reject) => {
+      if (entry.isFile) {
+        entry.file(
+          (file) => {
+            file.webkitRelativePath = path + file.name;
+            resolve([file]);
+          },
+          (error) => reject(error)
+        );
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const entries = [];
+        const readEntries = () => {
+          reader.readEntries(async (batch) => {
+            if (!batch.length) {
+              const children = await Promise.all(
+                entries.map((child) => traverseEntry(child, `${path}${entry.name}/`))
+              );
+              resolve(children.flat());
+            } else {
+              entries.push(...batch);
+              readEntries();
+            }
+          }, reject);
+        };
+        readEntries();
+      } else {
+        resolve([]);
+      }
+    });
+
+  const allEntries = items
+    .map((item) => (typeof item.webkitGetAsEntry === "function" ? item.webkitGetAsEntry() : null))
+    .filter(Boolean);
+
+  const collected = await Promise.all(allEntries.map((entry) => traverseEntry(entry)));
+  return collected.flat();
+};
+
+const handleDrop = async (event) => {
+  event.preventDefault();
+  dropzone?.classList.remove("active");
+
+  const { dataTransfer } = event;
+  if (!dataTransfer) return;
+
+  if (dataTransfer.items?.length && dataTransfer.items[0].webkitGetAsEntry) {
+    const files = await extractFilesFromItems(Array.from(dataTransfer.items));
+    handleFileSelection(files);
+  } else if (dataTransfer.files?.length) {
+    handleFileSelection(dataTransfer.files);
+  }
+};
+
+if (dropzone) {
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dropzone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropzone.classList.add("active");
+    });
+  });
+
+  ["dragleave", "dragend"].forEach((eventName) => {
+    dropzone.addEventListener(eventName, () => dropzone.classList.remove("active"));
+  });
+
+  dropzone.addEventListener("drop", handleDrop);
+  dropzone.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      selectFilesButton?.click();
+    }
+  });
 }
+
+selectFilesButton?.addEventListener("click", () => {
+  autoProcessOnSelection = false;
+  fileInput?.click();
+});
+
+selectFolderButton?.addEventListener("click", () => {
+  autoProcessOnSelection = false;
+  folderInput?.click();
+});
 
 folderInput?.addEventListener("change", (event) => {
   if (event.target.files?.length) {
     handleFileSelection(event.target.files);
-    if (fileInput) {
-      fileInput.value = "";
-    }
+    fileInput && (fileInput.value = "");
   }
 });
 
 fileInput?.addEventListener("change", (event) => {
   if (event.target.files?.length) {
     handleFileSelection(event.target.files);
-    if (folderInput) {
-      folderInput.value = "";
-    }
+    folderInput && (folderInput.value = "");
   }
 });
 
-settingsForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
+jumpToUploadButton?.addEventListener("click", () => {
+  focusUploadStep();
+  highlightDropzone();
+});
 
+reuploadFilesButton?.addEventListener("click", () => {
+  autoProcessOnSelection = true;
+  focusUploadStep();
+  highlightDropzone();
+});
+
+regenerateButton?.addEventListener("click", () => {
+  showSettingsStep();
+});
+
+settingsForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  autoProcessOnSelection = false;
+  processCurrentSelection();
+});
+
+async function processCurrentSelection() {
   if (!storedFiles.length) {
     alert("先に音声とテキストのファイルを選択してください。");
+    showSettingsStep({ scroll: false });
+    focusUploadStep();
     return;
   }
 
@@ -234,8 +324,7 @@ settingsForm.addEventListener("submit", async (event) => {
     const targetTotalTime = parseFloat(settingsForm.elements["targetTotalTime"].value || "0");
     const frameLockEnabled = settingsForm.elements["enableFrameLock"]?.checked ?? false;
     const frameRateValue = parseFloat(settingsForm.elements["frameRate"]?.value || "0");
-    const trimFrameOverflow =
-      settingsForm.elements["trimFrameOverflow"]?.checked ?? false;
+    const trimFrameOverflow = settingsForm.elements["trimFrameOverflow"]?.checked ?? false;
 
     if (frameLockEnabled && !(frameRateValue > 0)) {
       alert("フレームレートには 0 より大きい数値を指定してください。");
@@ -259,7 +348,7 @@ settingsForm.addEventListener("submit", async (event) => {
     console.error(error);
     alert(`エラーが発生しました: ${error.message}`);
   }
-});
+}
 
 async function buildFilePairs(files) {
   const textFiles = new Map();
@@ -512,4 +601,5 @@ function showResults(result, mode) {
   downloadLink.download = "output.srt";
 
   resultsSection.hidden = false;
+  resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }

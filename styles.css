@@ -1,19 +1,25 @@
 :root {
   color-scheme: light dark;
   --background: #0f172a;
-  --surface: rgba(15, 23, 42, 0.85);
+  --surface: rgba(15, 23, 42, 0.9);
+  --surface-muted: rgba(15, 23, 42, 0.65);
   --text: #e2e8f0;
   --muted: #94a3b8;
   --accent: #38bdf8;
   --accent-strong: #0ea5e9;
-  --border: rgba(148, 163, 184, 0.2);
+  --border: rgba(148, 163, 184, 0.25);
+  --shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
   font-family: "Inter", "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(56, 189, 248, 0.2), transparent 55%),
+  background: radial-gradient(circle at top, rgba(56, 189, 248, 0.16), transparent 55%),
     var(--background);
   color: var(--text);
   display: flex;
@@ -44,7 +50,7 @@ a {
 
 .app-main {
   flex: 1;
-  width: min(960px, 92vw);
+  width: min(980px, 92vw);
   margin: 0 auto;
   display: grid;
   gap: 1.5rem;
@@ -57,55 +63,90 @@ a {
   border-radius: 1rem;
   padding: 2rem;
   border: 1px solid var(--border);
-  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+  box-shadow: var(--shadow);
+}
+
+.step-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.step-heading {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.step-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.8rem;
+  background: rgba(56, 189, 248, 0.18);
+  color: var(--text);
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  width: fit-content;
 }
 
 .card h2 {
-  margin-top: 0;
+  margin: 0;
   font-size: 1.4rem;
 }
 
-.input-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1rem;
-  margin: 1rem 0;
-}
-
-.picker-control {
-  align-items: stretch;
-}
-
-.picker-toggle {
-  display: inline-flex;
-  border-radius: 0.75rem;
-  padding: 0.25rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border);
-}
-
-.picker-option {
-  appearance: none;
-  border: none;
-  background: transparent;
+.hint {
   color: var(--muted);
-  padding: 0.55rem 0.9rem;
-  border-radius: 0.6rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  margin-top: 0.35rem;
+  line-height: 1.6;
+}
+
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  text-align: center;
+  background: var(--surface-muted);
+  transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.picker-option.active,
-.picker-option:focus-visible {
-  background: rgba(56, 189, 248, 0.18);
-  color: var(--text);
-  outline: none;
+.dropzone:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
 }
 
-.picker-control .button {
-  flex: 1 1 auto;
+.dropzone.active {
+  border-color: var(--accent);
+  background: rgba(14, 165, 233, 0.12);
+  transform: translateY(-1px);
+}
+
+.drop-inner {
+  display: grid;
+  gap: 0.4rem;
+  align-items: center;
+  justify-items: center;
+}
+
+.drop-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.muted {
+  color: var(--muted);
+  margin: 0;
+}
+
+.drop-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 0.5rem 0 0.25rem;
 }
 
 .button {
@@ -115,26 +156,32 @@ a {
   gap: 0.5rem;
   padding: 0.85rem 1.2rem;
   border-radius: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-}
-
-.button input[type="file"] {
-  display: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease,
+    border-color 0.15s ease;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border);
 }
 
 .button-primary {
   background: linear-gradient(120deg, var(--accent), var(--accent-strong));
   color: #0b1120;
   box-shadow: 0 12px 30px rgba(14, 165, 233, 0.3);
+  border-color: transparent;
 }
 
 .button-secondary {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.button-ghost {
+  background: transparent;
   border-color: var(--border);
+  color: var(--muted);
 }
 
 .button:hover {
@@ -144,16 +191,6 @@ a {
 
 .button:active {
   transform: translateY(0);
-}
-
-.input-separator {
-  color: var(--muted);
-}
-
-.hint {
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
 }
 
 .selected-files {
@@ -175,7 +212,7 @@ a {
 
 .settings-form {
   display: grid;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 fieldset {
@@ -185,30 +222,28 @@ fieldset {
   margin: 0;
 }
 
+fieldset.highlight {
+  border-color: rgba(56, 189, 248, 0.35);
+  background: rgba(14, 165, 233, 0.05);
+}
+
 legend {
   padding: 0 0.5rem;
+  font-weight: 700;
 }
 
-.radio {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  margin: 0.5rem 0;
-}
-
-.checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0.5rem 0;
-}
-
+.checkbox,
 .toggle {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   margin: 0.5rem 0;
   font-weight: 600;
+}
+
+.checkbox.nested {
+  margin-left: 1.4rem;
+  color: var(--muted);
 }
 
 .toggle input[type="checkbox"] {
@@ -251,7 +286,8 @@ legend {
   display: none;
 }
 
-.mode-settings input[type="number"] {
+.mode-settings input[type="number"],
+input[type="number"]#frameRate {
   padding: 0.75rem;
   border-radius: 0.6rem;
   border: 1px solid var(--border);
@@ -259,20 +295,11 @@ legend {
   color: var(--text);
 }
 
-.frame-rate-options {
-  display: grid;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.frame-rate-options.hidden {
-  display: none;
-}
-
 .frame-rate-presets {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .frame-rate-chip {
@@ -282,7 +309,7 @@ legend {
   padding: 0.4rem 0.85rem;
   background: rgba(15, 23, 42, 0.4);
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
@@ -300,13 +327,66 @@ legend {
   cursor: not-allowed;
 }
 
-#results h3 {
-  margin-top: 0;
+.advanced {
+  border-radius: 0.9rem;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.35);
+  padding: 0.5rem 0.9rem;
+}
+
+.advanced summary {
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+}
+
+.advanced summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced summary::after {
+  content: "▼";
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-left: 0.35rem;
+}
+
+.advanced[open] summary::after {
+  content: "▲";
+}
+
+.advanced-body {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.action-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.result-secondary {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .result-grid {
   display: grid;
   gap: 1.5rem;
+  margin-top: 1rem;
 }
 
 @media (min-width: 720px) {
