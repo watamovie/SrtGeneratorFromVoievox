@@ -254,19 +254,22 @@
 
       <section class="card info-card" id="contact">
         <h2>お問い合わせ</h2>
-        <p class="hint">ご意見・ご要望・不具合報告など、お気軽にお知らせください。</p>
-        <form class="contact-form">
-          <label for="contactName">お名前</label>
-          <input type="text" id="contactName" name="name" placeholder="山田 太郎" required />
-
-          <label for="contactEmail">メールアドレス</label>
-          <input type="email" id="contactEmail" name="email" placeholder="example@email.com" required />
-
-          <label for="contactMessage">お問い合わせ内容</label>
-          <textarea id="contactMessage" name="message" rows="4" placeholder="お問い合わせ内容をご記入ください" required></textarea>
-
-          <button type="submit" class="button button-primary">送信する</button>
-        </form>
+        <p class="hint">
+          ご意見・ご要望・不具合報告などは、以下のGoogleフォームからお知らせください。
+        </p>
+        <div class="contact-form" role="presentation">
+          <p class="muted">
+            既存のフォームデザインのまま直接送信することが技術的に難しいため、外部リンクでの受付といたします。
+          </p>
+          <a
+            class="button button-primary"
+            href="https://docs.google.com/forms/d/e/1FAIpQLScNiKwZIhoFwhsDiF-fgO7egaFOtaQflfv9vMDqABimnW37Ag/viewform?usp=header"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Googleフォームを開く
+          </a>
+        </div>
       </section>
     </main>
 
