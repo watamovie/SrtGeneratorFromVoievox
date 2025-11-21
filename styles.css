@@ -30,22 +30,76 @@ a {
   color: inherit;
 }
 
-.app-header,
-.app-footer {
+.site-header {
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 2.25rem 1rem 2.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.6) 70%, transparent);
+  backdrop-filter: blur(16px);
 }
 
-.app-header h1 {
-  margin-bottom: 0.5rem;
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+
+.brand-icon {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.9rem;
+  box-shadow: 0 12px 26px rgba(56, 189, 248, 0.18);
+}
+
+.brand-text h1 {
+  margin: 0.1rem 0 0;
   font-size: clamp(1.8rem, 3vw, 2.4rem);
+}
+
+.brand-kicker {
+  margin: 0;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.8rem;
 }
 
 .lead {
   color: var(--muted);
-  margin: 0 auto;
+  margin: 0.25rem auto 0;
   max-width: 56rem;
   line-height: 1.6;
+}
+
+.site-nav {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.site-nav a {
+  padding: 0.65rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 700;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.site-nav a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.35);
+  border-color: rgba(56, 189, 248, 0.5);
 }
 
 .app-main {
@@ -55,6 +109,10 @@ a {
   display: grid;
   gap: 1.5rem;
   padding-bottom: 3rem;
+}
+
+.app-main.single-column {
+  width: min(720px, 94vw);
 }
 
 .card {
@@ -433,6 +491,9 @@ input[type="number"]#frameRate {
 
 .app-footer {
   color: var(--muted);
+  text-align: center;
+  padding: 2rem 1rem 2.5rem;
+  border-top: 1px solid var(--border);
 }
 
 .info-card {

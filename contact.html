@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>お問い合わせ | Voievox SRT ジェネレーター</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">
+        <img src="assets/favicon.svg" alt="SRT ジェネレーター" class="brand-icon" />
+        <div class="brand-text">
+          <p class="brand-kicker">Voievox Toolkit</p>
+          <h1>お問い合わせ</h1>
+        </div>
+      </div>
+      <p class="lead">ご意見・ご要望・不具合報告など、お気軽にお知らせください。</p>
+      <nav class="site-nav" aria-label="ページナビゲーション">
+        <a href="index.html">ホーム</a>
+        <a href="terms.html">利用規約</a>
+      </nav>
+    </header>
+
+    <main class="app-main single-column">
+      <section class="card info-card">
+        <h2>お問い合わせフォーム</h2>
+        <form
+          class="contact-form"
+          action="https://docs.google.com/forms/d/e/1FAIpQLScNiKwZIhoFwhsDiF-fgO7egaFOtaQflfv9vMDqABimnW37Ag/formResponse"
+          method="POST"
+          target="contactFormFrame"
+          accept-charset="UTF-8"
+        >
+          <label for="contactName">お名前</label>
+          <input
+            type="text"
+            id="contactName"
+            name="entry.1058448859"
+            placeholder="山田 太郎"
+            required
+            autocomplete="name"
+          />
+
+          <label for="contactEmail">メールアドレス</label>
+          <input
+            type="email"
+            id="contactEmail"
+            name="entry.832747022"
+            placeholder="example@email.com"
+            required
+            autocomplete="email"
+          />
+
+          <label for="contactMessage">お問い合わせ内容</label>
+          <textarea
+            id="contactMessage"
+            name="entry.1926934408"
+            rows="4"
+            placeholder="お問い合わせ内容をご記入ください"
+            required
+          ></textarea>
+
+          <div class="contact-actions">
+            <button type="submit" class="button button-primary" id="contactSubmitButton">
+              送信する
+            </button>
+            <p class="contact-status" id="contactStatus" aria-live="polite"></p>
+          </div>
+          <iframe name="contactFormFrame" id="contactFormFrame" title="contact submission" hidden></iframe>
+        </form>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <nav class="footer-nav">
+        <a href="index.html">ホームに戻る</a>
+        <span aria-hidden="true">•</span>
+        <a href="terms.html">利用規約</a>
+      </nav>
+    </footer>
+
+    <script src="contact.js" type="module"></script>
+  </body>
+</html>
