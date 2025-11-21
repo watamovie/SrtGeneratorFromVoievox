@@ -4,14 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Voievox SRT ジェネレーター</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="app-header" id="top">
-      <h1>SRT字幕自動生成ツール</h1>
+    <header class="site-header" id="top">
+      <div class="brand">
+        <img src="assets/favicon.svg" alt="SRT ジェネレーター" class="brand-icon" />
+        <div class="brand-text">
+          <p class="brand-kicker">Voievox Toolkit</p>
+          <h1>SRT字幕自動生成ツール</h1>
+        </div>
+      </div>
       <p class="lead">
         音声（.wav）とテキスト（.txt）のペアから、フレームに揃ったSRT字幕を生成します。
       </p>
+      <nav class="site-nav" aria-label="主要ナビゲーション">
+        <a href="#uploadStep">ファイル読み込み</a>
+        <a href="#settingsStep">動画設定</a>
+        <a href="#howto">使い方</a>
+      </nav>
     </header>
 
     <main class="app-main">
@@ -238,99 +250,6 @@
         </ol>
         <p class="hint">タイミング調整いらずで、数分でナレーション付き動画の字幕が整います。</p>
       </section>
-
-      <section class="card info-card" id="terms">
-        <h2>利用規約</h2>
-
-        <h3>個人情報の利用目的</h3>
-        <p>
-          当サービスでは、メールでのお問い合わせなどの際に、名前、メールアドレス等の個人情報をご登録いただく場合がございます。これらの個人情報は質問に対する回答や必要な情報をご連絡する場合に利用させていただくものであり、個人情報をご提供いただく際の目的以外では利用いたしません。
-        </p>
-
-        <h3>個人情報の第三者への開示</h3>
-        <p>
-          当サイトでは、個人情報は適切に管理し、以下に該当する場合を除いて第三者に開示することはありません。
-        </p>
-        <ul>
-          <li>法令等への協力のため、開示が必要となる場合</li>
-        </ul>
-
-        <h3>個人情報の開示、訂正、追加、削除、利用停止</h3>
-        <p>
-          ご本人からの個人データの開示、訂正、追加、削除、利用停止のご希望の場合には、ご本人であることを確認させていただいた上、速やかに対応させていただきます。
-        </p>
-
-        <h3>アクセス解析ツールについて</h3>
-        <p>
-          当サイトでは、Googleによるアクセス解析ツール「Googleアナリティクス」を利用しています。このGoogleアナリティクスはトラフィックデータの収集のためにCookieを使用しています。このトラフィックデータは匿名で収集されており、個人を特定するものではありません。この機能はCookieを無効にすることで収集を拒否することが出来ますので、お使いのブラウザの設定をご確認ください。この規約に関して、詳しくは
-          <a href="https://marketingplatform.google.com/about/analytics/terms/jp/" target="_blank" rel="noopener noreferrer">こちら</a>をご覧ください。
-        </p>
-
-        <h3>広告の配信について</h3>
-        <p>
-          当サイトは第三者配信の広告サービス「Google Adsense（グーグルアドセンス）」を利用しています。広告配信事業者は、ユーザーの興味に応じた広告を表示するためにCookie（クッキー）を使用することがあります。Cookie（クッキー）を無効にする設定およびGoogleアドセンスに関する詳細は
-          <a href="https://policies.google.com/technologies/ads?hl=ja" target="_blank" rel="noopener noreferrer">「広告 – ポリシーと規約 – Google」</a>をご覧ください。
-        </p>
-
-        <h3>免責事項</h3>
-        <p>
-          当サイトからリンクやバナーなどによって他のサイトに移動された場合、移動先サイトで提供される情報、サービス等について一切の責任を負いません。当サイトのコンテンツ・情報につきまして、可能な限り正確な情報を掲載するよう努めておりますが、誤情報が入り込んだり、情報が古くなっていることもございます。当サイトに掲載された内容によって生じた損害等の一切の責任を負いかねますのでご了承ください。
-        </p>
-
-        <h3>プライバシーポリシーの変更について</h3>
-        <p>
-          当サイトは、個人情報に関して適用される日本の法令を遵守するとともに、本ポリシーの内容を適宜見直しその改善に努めます。修正された最新のプライバシーポリシーは常に本ページにて開示されます。
-        </p>
-      </section>
-
-      <section class="card info-card" id="contact">
-        <h2>お問い合わせ</h2>
-        <p class="hint">ご意見・ご要望・不具合報告など、お気軽にお知らせください。</p>
-        <form
-          class="contact-form"
-          action="https://docs.google.com/forms/d/e/1FAIpQLScNiKwZIhoFwhsDiF-fgO7egaFOtaQflfv9vMDqABimnW37Ag/formResponse"
-          method="POST"
-          target="contactFormFrame"
-          accept-charset="UTF-8"
-        >
-          <label for="contactName">お名前</label>
-          <input
-            type="text"
-            id="contactName"
-            name="entry.1058448859"
-            placeholder="山田 太郎"
-            required
-            autocomplete="name"
-          />
-
-          <label for="contactEmail">メールアドレス</label>
-          <input
-            type="email"
-            id="contactEmail"
-            name="entry.832747022"
-            placeholder="example@email.com"
-            required
-            autocomplete="email"
-          />
-
-          <label for="contactMessage">お問い合わせ内容</label>
-          <textarea
-            id="contactMessage"
-            name="entry.1926934408"
-            rows="4"
-            placeholder="お問い合わせ内容をご記入ください"
-            required
-          ></textarea>
-
-          <div class="contact-actions">
-            <button type="submit" class="button button-primary" id="contactSubmitButton">
-              送信する
-            </button>
-            <p class="contact-status" id="contactStatus" aria-live="polite"></p>
-          </div>
-          <iframe name="contactFormFrame" id="contactFormFrame" title="contact submission" hidden></iframe>
-        </form>
-      </section>
     </main>
 
     <footer class="app-footer">
@@ -338,9 +257,9 @@
         同名の <code>.wav</code> と <code>.txt</code> ファイルをペアにして処理します。ファイル名は自動的に昇順で並び替えられます。
       </p>
       <nav class="footer-nav">
-        <a href="#terms">利用規約</a>
+        <a href="terms.html">利用規約</a>
         <span aria-hidden="true">•</span>
-        <a href="#contact">お問い合わせフォーム</a>
+        <a href="contact.html">お問い合わせ</a>
         <span aria-hidden="true">•</span>
         <a href="#top">Topへ戻る</a>
       </nav>
