@@ -2,6 +2,8 @@ const folderInput = document.getElementById("folderInput");
 const fileInput = document.getElementById("fileInput");
 const openPickerButton = document.getElementById("openPickerButton");
 const pickerToggle = document.getElementById("pickerToggle");
+const dropZone = document.getElementById("dropZone");
+const importStatus = document.getElementById("importStatus");
 const selectedFiles = document.getElementById("selectedFiles");
 const settingsForm = document.getElementById("settingsForm");
 const modeInput = document.getElementById("modeInput");
@@ -21,6 +23,7 @@ const frameRatePresetContainer = document.getElementById("frameRatePresets");
 const frameRateStatEl = document.getElementById("frameRateStat");
 const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
 const frameDriftEl = document.getElementById("frameDrift");
+const previewList = document.getElementById("previewList");
 
 const manualSettings = document.querySelector('.mode-settings[data-mode="manual"]');
 const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
@@ -31,6 +34,7 @@ let pickerMode = "folder";
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
+setImportStatus("idle");
 
 if (frameToggle && frameRateOptionsEl && frameRateInput) {
   const syncFrameOptionsVisibility = () => {
@@ -97,6 +101,39 @@ if (pickerToggle && openPickerButton) {
   fileInput?.addEventListener("click", () => syncModeFromInput("file"));
   folderInput?.addEventListener("change", () => setPickerMode("folder"));
   fileInput?.addEventListener("change", () => setPickerMode("file"));
+}
+
+if (dropZone) {
+  const toggleDragClass = (active) => dropZone.classList.toggle("dragover", active);
+
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      toggleDragClass(true);
+    });
+  });
+
+  ["dragleave", "dragend", "drop"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      toggleDragClass(false);
+    });
+  });
+
+  dropZone.addEventListener("drop", async (event) => {
+    const files = await extractDataTransferFiles(event.dataTransfer);
+    if (files.length) {
+      handleFileSelection(files);
+    }
+  });
+
+  dropZone.addEventListener("click", () => openPickerButton?.click());
+  dropZone.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openPickerButton?.click();
+    }
+  });
 }
 
 if (autoModeToggle && modeInput) {
@@ -182,17 +219,19 @@ function handleFileSelection(files) {
   if (!storedFiles.length) {
     selectedFiles.textContent = "ファイルが選択されていません";
     selectedFiles.classList.add("empty");
+    setImportStatus("idle");
     return;
   }
 
   const list = storedFiles
     .slice()
-    .sort((a, b) => a.name.localeCompare(b.name, "ja"))
+    .sort((a, b) => (a.webkitRelativePath || a.name).localeCompare(b.webkitRelativePath || b.name, "ja"))
     .map((file) => `• ${file.webkitRelativePath || file.name}`)
     .join("\n");
 
   selectedFiles.textContent = list;
   selectedFiles.classList.remove("empty");
+  setImportStatus("ready");
 }
 
 folderInput?.addEventListener("change", (event) => {
@@ -260,6 +299,63 @@ settingsForm.addEventListener("submit", async (event) => {
     alert(`エラーが発生しました: ${error.message}`);
   }
 });
+
+async function extractDataTransferFiles(dataTransfer) {
+  if (!dataTransfer) return [];
+  const items = Array.from(dataTransfer.items || []);
+  const hasEntries = items.some((item) => typeof item.webkitGetAsEntry === "function");
+
+  if (hasEntries) {
+    const nestedFiles = await Promise.all(
+      items.map((item) => traverseEntry(item.webkitGetAsEntry?.()))
+    );
+    return nestedFiles.flat().filter(Boolean);
+  }
+
+  return Array.from(dataTransfer.files || []);
+}
+
+function traverseEntry(entry, path = "") {
+  return new Promise((resolve) => {
+    if (!entry) return resolve([]);
+
+    if (entry.isFile) {
+      entry.file(
+        (file) => {
+          const relativePath = `${path}${file.name}`;
+          try {
+            Object.defineProperty(file, "webkitRelativePath", { value: relativePath });
+          } catch (error) {
+            file.relativePath = relativePath;
+          }
+          resolve([file]);
+        },
+        () => resolve([])
+      );
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      const entries = [];
+
+      const readEntries = () => {
+        reader.readEntries(async (batch) => {
+          if (!batch.length) {
+            const files = await Promise.all(
+              entries.map((item) => traverseEntry(item, `${path}${entry.name}/`))
+            );
+            resolve(files.flat());
+          } else {
+            entries.push(...batch);
+            readEntries();
+          }
+        });
+      };
+
+      readEntries();
+    } else {
+      resolve([]);
+    }
+  });
+}
 
 async function buildFilePairs(files) {
   const textFiles = new Map();
@@ -502,6 +598,7 @@ function showResults(result, mode) {
   }
 
   logEl.textContent = messages.join("\n");
+  renderPreview(result.srtContent);
 
   const blob = new Blob([result.srtContent], { type: "text/plain;charset=utf-8" });
   if (currentDownloadUrl) {
@@ -512,4 +609,59 @@ function showResults(result, mode) {
   downloadLink.download = "output.srt";
 
   resultsSection.hidden = false;
+}
+
+function renderPreview(srtContent) {
+  if (!previewList) return;
+  const clean = srtContent.trim();
+  if (!clean) {
+    previewList.innerHTML = '<p class="muted">プレビューできる字幕がありません。</p>';
+    return;
+  }
+
+  const entries = clean.split(/\n{2,}/).map((block) => {
+    const lines = block.split("\n");
+    const index = lines[0];
+    const time = lines[1];
+    const text = lines.slice(2).join("\n");
+    return { index, time, text };
+  });
+
+  previewList.innerHTML = "";
+  const fragment = document.createDocumentFragment();
+
+  entries.forEach((entry) => {
+    const row = document.createElement("div");
+    row.className = "preview-row";
+
+    const idx = document.createElement("div");
+    idx.className = "preview-index";
+    idx.textContent = entry.index;
+
+    const time = document.createElement("div");
+    time.className = "preview-time";
+    time.textContent = entry.time;
+
+    const text = document.createElement("div");
+    text.className = "preview-text";
+    text.textContent = entry.text;
+
+    row.append(idx, time, text);
+    fragment.appendChild(row);
+  });
+
+  previewList.appendChild(fragment);
+}
+
+function setImportStatus(status) {
+  if (!importStatus) return;
+  importStatus.classList.remove("pill-success", "pill-muted");
+
+  if (status === "ready") {
+    importStatus.textContent = "インポート完了";
+    importStatus.classList.add("pill-success");
+  } else {
+    importStatus.textContent = "未選択";
+    importStatus.classList.add("pill-muted");
+  }
 }
