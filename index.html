@@ -255,17 +255,49 @@
       <section class="card info-card" id="contact">
         <h2>お問い合わせ</h2>
         <p class="hint">ご意見・ご要望・不具合報告など、お気軽にお知らせください。</p>
-        <form class="contact-form">
+        <form
+          class="contact-form"
+          action="https://docs.google.com/forms/d/e/1FAIpQLScNiKwZIhoFwhsDiF-fgO7egaFOtaQflfv9vMDqABimnW37Ag/formResponse"
+          method="POST"
+          target="contactFormFrame"
+          accept-charset="UTF-8"
+        >
           <label for="contactName">お名前</label>
-          <input type="text" id="contactName" name="name" placeholder="山田 太郎" required />
+          <input
+            type="text"
+            id="contactName"
+            name="entry.1058448859"
+            placeholder="山田 太郎"
+            required
+            autocomplete="name"
+          />
 
           <label for="contactEmail">メールアドレス</label>
-          <input type="email" id="contactEmail" name="email" placeholder="example@email.com" required />
+          <input
+            type="email"
+            id="contactEmail"
+            name="entry.832747022"
+            placeholder="example@email.com"
+            required
+            autocomplete="email"
+          />
 
           <label for="contactMessage">お問い合わせ内容</label>
-          <textarea id="contactMessage" name="message" rows="4" placeholder="お問い合わせ内容をご記入ください" required></textarea>
+          <textarea
+            id="contactMessage"
+            name="entry.1926934408"
+            rows="4"
+            placeholder="お問い合わせ内容をご記入ください"
+            required
+          ></textarea>
 
-          <button type="submit" class="button button-primary">送信する</button>
+          <div class="contact-actions">
+            <button type="submit" class="button button-primary" id="contactSubmitButton">
+              送信する
+            </button>
+            <p class="contact-status" id="contactStatus" aria-live="polite"></p>
+          </div>
+          <iframe name="contactFormFrame" id="contactFormFrame" title="contact submission" hidden></iframe>
         </form>
       </section>
     </main>
