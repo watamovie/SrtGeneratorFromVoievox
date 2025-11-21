@@ -28,7 +28,7 @@
     </header>
 
     <main class="app-main">
-      <section class="hero" id="top">
+      <section class="hero info-only" id="top">
         <p class="eyebrow">VOICEVOX × SRT</p>
         <div class="hero-grid">
           <div class="hero-copy">
@@ -58,7 +58,25 @@
         </div>
       </section>
 
-      <section class="card step-card" id="uploadStep">
+      <section class="card wizard-progress" aria-label="ステップの進行状況">
+        <p class="step-label">ワークフロー</p>
+        <div class="progress-steps" role="list">
+          <div class="progress-step" data-stage="upload" role="listitem">
+            <p>ファイル読み込み</p>
+            <small>ペアになる wav / txt をまとめて指定</small>
+          </div>
+          <div class="progress-step" data-stage="settings" role="listitem">
+            <p>フレームレート設定</p>
+            <small>詳細設定もここで調整</small>
+          </div>
+          <div class="progress-step" data-stage="results" role="listitem">
+            <p>生成 &amp; ダウンロード</p>
+            <small>SRT を保存して完了</small>
+          </div>
+        </div>
+      </section>
+
+      <section class="card step-card wizard-view" id="uploadStep" data-view="upload">
         <div class="step-heading">
           <p class="step-label">STEP 1</p>
           <h2>ファイルを読み込む</h2>
@@ -97,7 +115,7 @@
         </div>
       </section>
 
-      <section class="card step-card" id="settingsStep" hidden>
+      <section class="card step-card wizard-view" id="settingsStep" data-view="settings" hidden>
         <div class="step-heading">
           <p class="step-label">STEP 2</p>
           <h2>動画設定</h2>
@@ -191,7 +209,7 @@
         </form>
       </section>
 
-      <section class="card step-card" id="results" hidden>
+      <section class="card step-card wizard-view" id="results" data-view="results" hidden>
         <div class="step-heading">
           <p class="step-label">STEP 3</p>
           <h2>結果</h2>
@@ -251,7 +269,7 @@
         </div>
       </section>
 
-      <section class="card info-card" id="howto">
+      <section class="card info-card info-only" id="howto">
         <h2>使い方</h2>
         <ol class="howto-list">
           <li>
@@ -282,7 +300,7 @@
         <p class="hint">タイミング調整いらずで、数分でナレーション付き動画の字幕が整います。</p>
       </section>
 
-      <section class="card info-card" id="contact">
+      <section class="card info-card info-only" id="contact">
         <h2>お問い合わせ</h2>
         <p class="hint">ご意見・ご要望・不具合報告など、お気軽にお知らせください。</p>
         <form

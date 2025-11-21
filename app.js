@@ -1,7 +1,11 @@
+const body = document.body;
 const dropzone = document.getElementById("dropzone");
 const uploadStep = document.getElementById("uploadStep");
 const settingsStep = document.getElementById("settingsStep");
 const resultsSection = document.getElementById("results");
+const wizardViews = document.querySelectorAll(".wizard-view");
+const infoSections = document.querySelectorAll(".info-only");
+const progressSteps = document.querySelectorAll(".progress-step");
 
 const folderInput = document.getElementById("folderInput");
 const fileInput = document.getElementById("fileInput");
@@ -40,19 +44,50 @@ let autoProcessOnSelection = false;
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
 
-const focusUploadStep = () => {
-  uploadStep?.scrollIntoView({ behavior: "smooth", block: "start" });
+let currentStage = "home";
+
+const setStage = (stage, { scroll = true } = {}) => {
+  currentStage = stage;
+  const isWizard = stage !== "home";
+
+  body?.classList.toggle("wizard-mode", isWizard);
+  body && (body.dataset.stage = stage);
+
+  infoSections.forEach((section) => {
+    section.hidden = isWizard;
+  });
+
+  wizardViews.forEach((section) => {
+    const view = section.dataset.view;
+    const isHomeUpload = stage === "home" && view === "upload";
+    section.hidden = !(stage === view || isHomeUpload);
+  });
+
+  progressSteps.forEach((step) => {
+    const view = step.dataset.stage;
+    const isActive = stage === view || (stage === "home" && view === "upload");
+    step.classList.toggle("active", isActive);
+  });
+
+  if (scroll) {
+    const target =
+      stage === "home"
+        ? document.getElementById("top")
+        : Array.from(wizardViews).find((section) => !section.hidden) ?? uploadStep;
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+};
+
+const focusUploadStep = ({ highlight = false, scroll = true } = {}) => {
+  const nextStage = currentStage === "home" ? "home" : "upload";
+  setStage(nextStage, { scroll });
+  if (highlight) {
+    highlightDropzone();
+  }
   dropzone?.focus({ preventScroll: true });
 };
 
-const showSettingsStep = ({ scroll = true } = {}) => {
-  if (settingsStep) {
-    settingsStep.hidden = false;
-    if (scroll) {
-      settingsStep.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }
-};
+setStage("home", { scroll: false });
 
 const highlightDropzone = () => {
   dropzone?.classList.add("active");
@@ -173,7 +208,7 @@ const handleFileSelection = (files) => {
 
   selectedFiles.textContent = list;
   selectedFiles.classList.remove("empty");
-  showSettingsStep();
+  setStage("settings");
 
   if (autoProcessOnSelection) {
     autoProcessOnSelection = false;
@@ -283,18 +318,18 @@ fileInput?.addEventListener("change", (event) => {
 });
 
 jumpToUploadButton?.addEventListener("click", () => {
-  focusUploadStep();
-  highlightDropzone();
+  setStage("upload");
+  focusUploadStep({ highlight: true, scroll: false });
 });
 
 reuploadFilesButton?.addEventListener("click", () => {
   autoProcessOnSelection = true;
-  focusUploadStep();
-  highlightDropzone();
+  setStage("upload");
+  focusUploadStep({ highlight: true, scroll: false });
 });
 
 regenerateButton?.addEventListener("click", () => {
-  showSettingsStep();
+  setStage("settings");
 });
 
 settingsForm.addEventListener("submit", (event) => {
@@ -306,8 +341,8 @@ settingsForm.addEventListener("submit", (event) => {
 async function processCurrentSelection() {
   if (!storedFiles.length) {
     alert("先に音声とテキストのファイルを選択してください。");
-    showSettingsStep({ scroll: false });
-    focusUploadStep();
+    setStage(currentStage === "home" ? "home" : "upload", { scroll: false });
+    focusUploadStep({ highlight: true });
     return;
   }
 
@@ -600,8 +635,7 @@ function showResults(result, mode) {
   downloadLink.href = currentDownloadUrl;
   downloadLink.download = "output.srt";
 
-  resultsSection.hidden = false;
-  resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  setStage("results");
 }
 
 const contactForm = document.querySelector(".contact-form");

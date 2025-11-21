@@ -149,6 +149,10 @@ a {
   padding: 1.5rem 0 3.5rem;
 }
 
+body.wizard-mode .app-main {
+  width: min(820px, 92vw);
+}
+
 .hero {
   background: linear-gradient(135deg, rgba(31, 138, 85, 0.08), rgba(15, 48, 32, 0.05)), var(--surface);
   border: 1px solid var(--border);
@@ -234,6 +238,51 @@ a {
   padding: 1.75rem;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
+}
+
+.wizard-view[hidden] {
+  display: none !important;
+}
+
+.wizard-progress {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.progress-steps {
+  display: grid;
+  gap: 0.6rem;
+}
+
+@media (min-width: 720px) {
+  .progress-steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.progress-step {
+  border: 1px dashed var(--border);
+  border-radius: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--surface-muted);
+  display: grid;
+  gap: 0.15rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.progress-step p {
+  margin: 0;
+  font-weight: 800;
+}
+
+.progress-step small {
+  color: var(--muted);
+}
+
+.progress-step.active {
+  border-style: solid;
+  border-color: rgba(31, 138, 85, 0.5);
+  background: rgba(31, 138, 85, 0.08);
 }
 
 .step-card {
@@ -638,6 +687,14 @@ input[type="number"]#frameRate {
 
 .info-card a {
   color: var(--accent);
+}
+
+.info-only[hidden] {
+  display: none !important;
+}
+
+body.wizard-mode .info-only {
+  display: none;
 }
 
 .contact-form {
