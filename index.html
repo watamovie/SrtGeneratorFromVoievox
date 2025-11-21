@@ -8,15 +8,56 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="app-header" id="top">
-      <div class="brand-mark" aria-hidden="true">
-        <img src="favicon.svg" alt="" />
-      </div>
-      <h1>SRT字幕自動生成ツール</h1>
-      <p class="lead">音声（.wav）とテキスト（.txt）のペアから、フレームに揃ったSRT字幕を生成します。</p>
+    <header class="site-header">
+      <a class="logo" href="#top">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="favicon.svg" alt="" />
+        </span>
+        <div class="brand-text">
+          <strong>Voievox</strong>
+          <span>字幕生成アシスタント</span>
+        </div>
+      </a>
+      <nav class="nav-links" aria-label="主要ナビゲーション">
+        <a href="#uploadStep">使い方</a>
+        <a href="#howto">準備手順</a>
+        <a href="#contact">サポート</a>
+        <a href="terms.html">利用規約</a>
+      </nav>
+      <a class="button button-primary nav-cta" href="#uploadStep">無料で使う</a>
     </header>
 
     <main class="app-main">
+      <section class="hero" id="top">
+        <p class="eyebrow">VOICEVOX × SRT</p>
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <h1>数クリックで、台本どおりのSRT字幕を生成</h1>
+            <p class="lead">
+              音声（.wav）とテキスト（.txt）のペアをまとめて読み込むだけ。フレーム合わせや全体時間の微調整も、自動で整った字幕ファイルをブラウザだけで作成できます。
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#uploadStep">ファイルを読み込む</a>
+              <a class="button button-ghost" href="terms.html">利用規約を読む</a>
+            </div>
+            <ul class="hero-highlights">
+              <li>ブラウザ内完結・データは保存されません</li>
+              <li>フレームレートを選んで綺麗に揃うタイムコード</li>
+              <li>自動/手動のタイミング調整どちらにも対応</li>
+            </ul>
+          </div>
+          <div class="hero-card">
+            <p class="pill">STEPガイド</p>
+            <ol>
+              <li><span>ファイルまたはフォルダを選択</span></li>
+              <li><span>フレームレートと調整方法を設定</span></li>
+              <li><span>生成されたSRTをダウンロード</span></li>
+            </ol>
+            <p class="hint">同名 <code>.wav</code> と <code>.txt</code> を並べておくと自動でペアリングします。</p>
+          </div>
+        </div>
+      </section>
+
       <section class="card step-card" id="uploadStep">
         <div class="step-heading">
           <p class="step-label">STEP 1</p>
@@ -241,50 +282,6 @@
         <p class="hint">タイミング調整いらずで、数分でナレーション付き動画の字幕が整います。</p>
       </section>
 
-      <section class="card info-card" id="terms">
-        <h2>利用規約</h2>
-
-        <h3>個人情報の利用目的</h3>
-        <p>
-          当サービスでは、メールでのお問い合わせなどの際に、名前、メールアドレス等の個人情報をご登録いただく場合がございます。これらの個人情報は質問に対する回答や必要な情報をご連絡する場合に利用させていただくものであり、個人情報をご提供いただく際の目的以外では利用いたしません。
-        </p>
-
-        <h3>個人情報の第三者への開示</h3>
-        <p>
-          当サイトでは、個人情報は適切に管理し、以下に該当する場合を除いて第三者に開示することはありません。
-        </p>
-        <ul>
-          <li>法令等への協力のため、開示が必要となる場合</li>
-        </ul>
-
-        <h3>個人情報の開示、訂正、追加、削除、利用停止</h3>
-        <p>
-          ご本人からの個人データの開示、訂正、追加、削除、利用停止のご希望の場合には、ご本人であることを確認させていただいた上、速やかに対応させていただきます。
-        </p>
-
-        <h3>アクセス解析ツールについて</h3>
-        <p>
-          当サイトでは、Googleによるアクセス解析ツール「Googleアナリティクス」を利用しています。このGoogleアナリティクスはトラフィックデータの収集のためにCookieを使用しています。このトラフィックデータは匿名で収集されており、個人を特定するものではありません。この機能はCookieを無効にすることで収集を拒否することが出来ますので、お使いのブラウザの設定をご確認ください。この規約に関して、詳しくは
-          <a href="https://marketingplatform.google.com/about/analytics/terms/jp/" target="_blank" rel="noopener noreferrer">こちら</a>をご覧ください。
-        </p>
-
-        <h3>広告の配信について</h3>
-        <p>
-          当サイトは第三者配信の広告サービス「Google Adsense（グーグルアドセンス）」を利用しています。広告配信事業者は、ユーザーの興味に応じた広告を表示するためにCookie（クッキー）を使用することがあります。Cookie（クッキー）を無効にする設定およびGoogleアドセンスに関する詳細は
-          <a href="https://policies.google.com/technologies/ads?hl=ja" target="_blank" rel="noopener noreferrer">「広告 – ポリシーと規約 – Google」</a>をご覧ください。
-        </p>
-
-        <h3>免責事項</h3>
-        <p>
-          当サイトからリンクやバナーなどによって他のサイトに移動された場合、移動先サイトで提供される情報、サービス等について一切の責任を負いません。当サイトのコンテンツ・情報につきまして、可能な限り正確な情報を掲載するよう努めておりますが、誤情報が入り込んだり、情報が古くなっていることもございます。当サイトに掲載された内容によって生じた損害等の一切の責任を負いかねますのでご了承ください。
-        </p>
-
-        <h3>プライバシーポリシーの変更について</h3>
-        <p>
-          当サイトは、個人情報に関して適用される日本の法令を遵守するとともに、本ポリシーの内容を適宜見直しその改善に努めます。修正された最新のプライバシーポリシーは常に本ページにて開示されます。
-        </p>
-      </section>
-
       <section class="card info-card" id="contact">
         <h2>お問い合わせ</h2>
         <p class="hint">ご意見・ご要望・不具合報告など、お気軽にお知らせください。</p>
@@ -336,16 +333,37 @@
     </main>
 
     <footer class="app-footer">
-      <p>
-        同名の <code>.wav</code> と <code>.txt</code> ファイルをペアにして処理します。ファイル名は自動的に昇順で並び替えられます。
-      </p>
-      <nav class="footer-nav">
-        <a href="#terms">利用規約</a>
-        <span aria-hidden="true">•</span>
-        <a href="#contact">お問い合わせフォーム</a>
-        <span aria-hidden="true">•</span>
-        <a href="#top">Topへ戻る</a>
-      </nav>
+      <div class="footer-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <img src="favicon.svg" alt="" />
+        </div>
+        <div>
+          <strong>Voievox Subtitle Tools</strong>
+          <p class="muted">ワークフローに寄り添うシンプルなSRTジェネレーター</p>
+        </div>
+      </div>
+      <div class="footer-grid">
+        <div>
+          <h3>概要</h3>
+          <p>
+            同名 <code>.wav</code> と <code>.txt</code> ファイルをペアにして処理します。ファイル名は自動で昇順ソートし、フレーム設定に沿ったタイムコードを生成します。
+          </p>
+        </div>
+        <div>
+          <h3>クイックリンク</h3>
+          <nav class="footer-nav">
+            <a href="#uploadStep">ファイルの読み込み</a>
+            <a href="#howto">準備手順</a>
+            <a href="terms.html">利用規約・ポリシー</a>
+            <a href="#contact">お問い合わせ</a>
+          </nav>
+        </div>
+        <div class="footer-actions">
+          <h3>すぐに始める</h3>
+          <a class="button button-primary" href="#uploadStep">SRTを作成する</a>
+          <a class="button button-ghost" href="#top">ページトップへ</a>
+        </div>
+      </div>
     </footer>
 
     <script src="app.js" type="module"></script>
