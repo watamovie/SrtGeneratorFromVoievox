@@ -441,3 +441,74 @@ code {
   padding: 0.1rem 0.3rem;
   border-radius: 0.3rem;
 }
+
+.guide-card {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.guide-heading {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.guide-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 820px) {
+  .guide-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+  }
+}
+
+.guide-steps {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.6rem;
+  line-height: 1.6;
+}
+
+.guide-steps li strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.6rem;
+  line-height: 1.6;
+}
+
+.guide-list li strong {
+  color: var(--text);
+}
+
+.faq {
+  margin: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.faq dt {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.faq dd {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.guide-note {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+  color: var(--muted);
+  line-height: 1.7;
+}

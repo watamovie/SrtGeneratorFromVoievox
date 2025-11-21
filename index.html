@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Voievox SRT ジェネレーターは、音声と台本テキストのセットからフレームに揃った字幕ファイルをブラウザ上で生成できる無料ツールです。"
+    />
     <title>Voievox SRT ジェネレーター</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -207,11 +211,91 @@
           </div>
         </div>
       </section>
+
+      <section class="card guide-card" id="howto">
+        <div class="guide-heading">
+          <p class="step-label">GUIDE</p>
+          <h2>使い方と活用のヒント</h2>
+          <p class="hint">
+            Google AdSense 審査でもコンテンツとして評価されるよう、ツールの目的や手順を詳しくまとめました。ブラウザ内完結で個人情報はアップロードされません。
+          </p>
+        </div>
+
+        <div class="guide-grid">
+          <article>
+            <h3>基本の流れ</h3>
+            <ol class="guide-steps">
+              <li>
+                <strong>素材を準備:</strong> 1 つの発話ごとに <code>.wav</code> と <code>.txt</code> を同名で揃え、フォルダにまとめます。
+              </li>
+              <li>
+                <strong>STEP 1 で読み込み:</strong> ドラッグ＆ドロップまたはボタンからフォルダ/ファイルを選択します。ファイル名は自動で昇順に並びます。
+              </li>
+              <li>
+                <strong>STEP 2 で設定:</strong> 動画編集ソフトに合わせてフレームレートを指定し、必要に応じて自動調整やフレーム揃えを有効にします。
+              </li>
+              <li>
+                <strong>STEP 3 でダウンロード:</strong> 生成された SRT を保存し、Premiere Pro / DaVinci Resolve / CapCut などに読み込んで利用します。
+              </li>
+            </ol>
+          </article>
+
+          <article>
+            <h3>設定のコツ</h3>
+            <ul class="guide-list">
+              <li>
+                <strong>フレーム境界への丸め:</strong> チェックを入れるとタイムコードがピッタリのフレームに揃い、映像と字幕のずれを防げます。
+              </li>
+              <li>
+                <strong>自動調整モード:</strong> 目標合計時間を指定すると、各クリップに均等な微調整を加えて尺合わせが行えます。
+              </li>
+              <li>
+                <strong>手動オフセット:</strong> 台本の読み上げが全体的に早い/遅いと感じたら、加算秒数をプラスまたはマイナスで入力してください。
+              </li>
+              <li>
+                <strong>テキスト整形:</strong> SRT は改行を保持します。句読点や改行位置を整えると、視認性の高い字幕になります。
+              </li>
+            </ul>
+          </article>
+
+          <article>
+            <h3>よくある質問</h3>
+            <dl class="faq">
+              <div>
+                <dt>Q. 処理したファイルはサーバーに送信されますか？</dt>
+                <dd>A. すべてブラウザ内で完結し、アップロードされません。オフラインに近い感覚で安心してご利用いただけます。</dd>
+              </div>
+              <div>
+                <dt>Q. どの音声形式に対応していますか？</dt>
+                <dd>A. 現状は <code>.wav</code> に対応しています。別形式は音声編集ソフトや FFmpeg で変換してからご利用ください。</dd>
+              </div>
+              <div>
+                <dt>Q. 文字化けが発生する場合は？</dt>
+                <dd>A. テキストファイルを UTF-8 で保存してください。エディタで再保存すると解消するケースが多いです。</dd>
+              </div>
+              <div>
+                <dt>Q. SRT をどこで検証できますか？</dt>
+                <dd>A. VLC などのプレイヤーで再生して位置を確認するほか、YouTube に非公開アップロードして字幕を読み込むと仕上がりを素早く確認できます。</dd>
+              </div>
+            </dl>
+          </article>
+        </div>
+
+        <section class="guide-note">
+          <h3>活用シナリオ</h3>
+          <p>
+            ナレーションの差し替えや、マルチリンガル対応のための字幕量産、ポッドキャストの動画化など、音声とテキストが揃っている制作フローに最適です。無料で利用でき、広告掲載ポリシーに沿った健全な用途を想定しています。
+          </p>
+        </section>
+      </section>
     </main>
 
     <footer class="app-footer">
       <p>
         同名の <code>.wav</code> と <code>.txt</code> ファイルをペアにして処理します。ファイル名は自動的に昇順で並び替えられます。
+      </p>
+      <p>
+        本ツールで生成した字幕は、映像編集や配信プラットフォームで自由に利用できます。クリーンで実用的な技術解説コンテンツとして、広告配信にも適した形を目指しています。
       </p>
     </footer>
 
