@@ -2,6 +2,8 @@ const dropzone = document.getElementById("dropzone");
 const uploadStep = document.getElementById("uploadStep");
 const settingsStep = document.getElementById("settingsStep");
 const resultsSection = document.getElementById("results");
+const workflowNav = document.getElementById("workflowNav");
+const workflowButtons = document.querySelectorAll("[data-step-button]");
 
 const folderInput = document.getElementById("folderInput");
 const fileInput = document.getElementById("fileInput");
@@ -36,6 +38,8 @@ const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
 let storedFiles = [];
 let currentDownloadUrl = null;
 let autoProcessOnSelection = false;
+let hasResults = false;
+const stepOrder = ["upload", "settings", "results"];
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
@@ -45,14 +49,58 @@ const focusUploadStep = () => {
   dropzone?.focus({ preventScroll: true });
 };
 
-const showSettingsStep = ({ scroll = true } = {}) => {
-  if (settingsStep) {
-    settingsStep.hidden = false;
-    if (scroll) {
-      settingsStep.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+const setWorkflowMode = (active) => {
+  document.body.classList.toggle("workflow-mode", active);
+  if (workflowNav) {
+    workflowNav.hidden = !active;
   }
 };
+
+const updateStepIndicators = (step) => {
+  const currentIndex = stepOrder.indexOf(step);
+  workflowButtons.forEach((button) => {
+    const name = button.dataset.stepButton;
+    const index = stepOrder.indexOf(name);
+    const isActive = name === step;
+    button.classList.toggle("active", isActive);
+    button.classList.toggle("completed", index !== -1 && index < currentIndex);
+    button.setAttribute("aria-current", isActive ? "step" : "false");
+  });
+};
+
+const goToStep = (step, { scroll = true } = {}) => {
+  if (step === "results" && !hasResults) return;
+
+  const shouldEnterWorkflow = step !== "upload" || storedFiles.length > 0 || hasResults;
+  setWorkflowMode(shouldEnterWorkflow);
+  const targets = {
+    upload: uploadStep,
+    settings: settingsStep,
+    results: resultsSection,
+  };
+
+  Object.entries(targets).forEach(([name, element]) => {
+    if (!element) return;
+    const isActive = name === step;
+    element.hidden = !isActive;
+    if (isActive && scroll) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+
+  updateStepIndicators(step);
+};
+
+workflowButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const target = button.dataset.stepButton;
+    if (target) {
+      goToStep(target);
+    }
+  });
+});
+
+updateStepIndicators("upload");
 
 const highlightDropzone = () => {
   dropzone?.classList.add("active");
@@ -173,7 +221,8 @@ const handleFileSelection = (files) => {
 
   selectedFiles.textContent = list;
   selectedFiles.classList.remove("empty");
-  showSettingsStep();
+  hasResults = false;
+  goToStep("settings");
 
   if (autoProcessOnSelection) {
     autoProcessOnSelection = false;
@@ -283,18 +332,21 @@ fileInput?.addEventListener("change", (event) => {
 });
 
 jumpToUploadButton?.addEventListener("click", () => {
+  goToStep("upload");
   focusUploadStep();
   highlightDropzone();
 });
 
 reuploadFilesButton?.addEventListener("click", () => {
   autoProcessOnSelection = true;
+  hasResults = false;
+  goToStep("upload");
   focusUploadStep();
   highlightDropzone();
 });
 
 regenerateButton?.addEventListener("click", () => {
-  showSettingsStep();
+  goToStep("settings");
 });
 
 settingsForm.addEventListener("submit", (event) => {
@@ -306,7 +358,11 @@ settingsForm.addEventListener("submit", (event) => {
 async function processCurrentSelection() {
   if (!storedFiles.length) {
     alert("先に音声とテキストのファイルを選択してください。");
-    showSettingsStep({ scroll: false });
+    setWorkflowMode(false);
+    uploadStep.hidden = false;
+    settingsStep.hidden = true;
+    resultsSection.hidden = true;
+    updateStepIndicators("upload");
     focusUploadStep();
     return;
   }
@@ -600,8 +656,8 @@ function showResults(result, mode) {
   downloadLink.href = currentDownloadUrl;
   downloadLink.download = "output.srt";
 
-  resultsSection.hidden = false;
-  resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  hasResults = true;
+  goToStep("results");
 }
 
 const contactForm = document.querySelector(".contact-form");
