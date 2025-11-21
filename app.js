@@ -1,7 +1,8 @@
 const folderInput = document.getElementById("folderInput");
 const fileInput = document.getElementById("fileInput");
-const openPickerButton = document.getElementById("openPickerButton");
-const pickerToggle = document.getElementById("pickerToggle");
+const selectFolderButton = document.getElementById("selectFolderButton");
+const selectFileButton = document.getElementById("selectFileButton");
+const dropZone = document.getElementById("dropZone");
 const selectedFiles = document.getElementById("selectedFiles");
 const settingsForm = document.getElementById("settingsForm");
 const modeInput = document.getElementById("modeInput");
@@ -21,16 +22,159 @@ const frameRatePresetContainer = document.getElementById("frameRatePresets");
 const frameRateStatEl = document.getElementById("frameRateStat");
 const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
 const frameDriftEl = document.getElementById("frameDrift");
+const generateButton = document.getElementById("generateButton");
+const frameCard = document.getElementById("frameCard");
+const autoRerunToggle = document.getElementById("autoRerunToggle");
+const rerunButton = document.getElementById("rerunButton");
 
 const manualSettings = document.querySelector('.mode-settings[data-mode="manual"]');
 const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
 
 let storedFiles = [];
 let currentDownloadUrl = null;
-let pickerMode = "folder";
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
+
+function setStep2Enabled(enabled) {
+  frameCard?.classList.toggle("disabled", !enabled);
+  frameCard?.setAttribute("aria-disabled", String(!enabled));
+  if (generateButton) {
+    generateButton.disabled = !enabled;
+  }
+}
+
+setStep2Enabled(false);
+
+function scrollToFrameCard() {
+  frameCard?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function highlightDropZone(active) {
+  dropZone?.classList.toggle("dragover", active);
+}
+
+async function handleDrop(event) {
+  event.preventDefault();
+  highlightDropZone(false);
+  const files = await extractFilesFromDataTransfer(event.dataTransfer);
+  if (files.length) {
+    handleFileSelection(files);
+  }
+}
+
+async function extractFilesFromDataTransfer(dataTransfer) {
+  if (!dataTransfer) return [];
+
+  const items = Array.from(dataTransfer.items || []);
+  if (!items.length) {
+    return Array.from(dataTransfer.files || []);
+  }
+
+  const filePromises = items.map((item) => {
+    const entry = item.webkitGetAsEntry?.();
+    if (!entry) {
+      const file = item.getAsFile();
+      return file ? Promise.resolve([file]) : Promise.resolve([]);
+    }
+    return traverseFileTree(entry);
+  });
+
+  const nestedFiles = await Promise.all(filePromises);
+  return nestedFiles.flat();
+}
+
+function traverseFileTree(entry, path = "") {
+  return new Promise((resolve) => {
+    if (entry.isFile) {
+      entry.file((file) => {
+        try {
+          Object.defineProperty(file, "webkitRelativePath", {
+            value: `${path}${file.name}`,
+            configurable: true,
+          });
+        } catch (error) {
+          // fallback: ignore if read-only
+        }
+        resolve([file]);
+      });
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      const entries = [];
+
+      const readEntries = () => {
+        reader.readEntries(async (batch) => {
+          if (!batch.length) {
+            const promises = entries.map((child) =>
+              traverseFileTree(child, `${path}${entry.name}/`)
+            );
+            const results = await Promise.all(promises);
+            resolve(results.flat());
+            return;
+          }
+          entries.push(...batch);
+          readEntries();
+        });
+      };
+
+      readEntries();
+    } else {
+      resolve([]);
+    }
+  });
+}
+
+function handleFileSelection(files) {
+  storedFiles = Array.from(files);
+
+  if (!storedFiles.length) {
+    selectedFiles.textContent = "ファイルが選択されていません";
+    selectedFiles.classList.add("empty");
+    setStep2Enabled(false);
+    return;
+  }
+
+  const list = storedFiles
+    .slice()
+    .sort((a, b) => (a.webkitRelativePath || a.name).localeCompare(b.webkitRelativePath || b.name, "ja"))
+    .map((file) => `• ${file.webkitRelativePath || file.name}`)
+    .join("\n");
+
+  selectedFiles.textContent = list;
+  selectedFiles.classList.remove("empty");
+  setStep2Enabled(true);
+
+  if (resultsSection && !resultsSection.hidden && autoRerunToggle?.checked) {
+    runGeneration();
+  } else {
+    scrollToFrameCard();
+  }
+}
+
+function bindPickerButtons() {
+  selectFolderButton?.addEventListener("click", () => folderInput?.click());
+  selectFileButton?.addEventListener("click", () => fileInput?.click());
+}
+
+function bindDropZone() {
+  if (!dropZone) return;
+
+  dropZone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    highlightDropZone(true);
+  });
+
+  dropZone.addEventListener("dragleave", () => highlightDropZone(false));
+  dropZone.addEventListener("drop", handleDrop);
+
+  dropZone.addEventListener("click", () => fileInput?.click());
+  dropZone.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      fileInput?.click();
+    }
+  });
+}
 
 if (frameToggle && frameRateOptionsEl && frameRateInput) {
   const syncFrameOptionsVisibility = () => {
@@ -41,85 +185,14 @@ if (frameToggle && frameRateOptionsEl && frameRateInput) {
       trimFrameOverflowInput.disabled = !enabled;
     }
     if (frameRatePresetContainer) {
-      frameRatePresetContainer
-        .querySelectorAll("button")
-        .forEach((button) => {
-          button.disabled = !enabled;
-        });
+      frameRatePresetContainer.querySelectorAll("button").forEach((button) => {
+        button.disabled = !enabled;
+      });
     }
   };
 
   syncFrameOptionsVisibility();
   frameToggle.addEventListener("change", syncFrameOptionsVisibility);
-}
-
-if (pickerToggle && openPickerButton) {
-  const pickerOptions = Array.from(
-    pickerToggle.querySelectorAll(".picker-option[data-picker-mode]")
-  );
-
-  const setPickerMode = (mode) => {
-    if (!mode) return;
-    pickerMode = mode;
-    pickerOptions.forEach((button) => {
-      const isActive = button.dataset.pickerMode === mode;
-      button.classList.toggle("active", isActive);
-      button.setAttribute("aria-pressed", String(isActive));
-    });
-  };
-
-  const activeButton = pickerOptions.find((button) => button.classList.contains("active"));
-  setPickerMode(activeButton?.dataset.pickerMode ?? "folder");
-
-  pickerOptions.forEach((button) => {
-    button.addEventListener("click", () => {
-      const mode = button.dataset.pickerMode;
-      if (mode && mode !== pickerMode) {
-        setPickerMode(mode);
-      }
-    });
-  });
-
-  openPickerButton.addEventListener("click", () => {
-    if (pickerMode === "folder") {
-      folderInput?.click();
-    } else {
-      fileInput?.click();
-    }
-  });
-
-  const syncModeFromInput = (mode) => {
-    if (!mode || mode === pickerMode) return;
-    setPickerMode(mode);
-  };
-
-  folderInput?.addEventListener("click", () => syncModeFromInput("folder"));
-  fileInput?.addEventListener("click", () => syncModeFromInput("file"));
-  folderInput?.addEventListener("change", () => setPickerMode("folder"));
-  fileInput?.addEventListener("change", () => setPickerMode("file"));
-}
-
-if (autoModeToggle && modeInput) {
-  const updateModeVisibility = () => {
-    const useAuto = autoModeToggle.checked;
-    modeInput.value = useAuto ? "auto" : "manual";
-    manualSettings?.classList.toggle("hidden", useAuto);
-    autoSettings?.classList.toggle("hidden", !useAuto);
-    const manualInput = settingsForm?.elements["manualAdjustment"];
-    const autoInput = settingsForm?.elements["targetTotalTime"];
-    if (manualInput) {
-      manualInput.disabled = useAuto;
-    }
-    if (autoInput) {
-      autoInput.disabled = !useAuto;
-    }
-    document
-      .querySelectorAll(".auto-only")
-      .forEach((el) => (el.style.display = useAuto ? "flex" : "none"));
-  };
-
-  updateModeVisibility();
-  autoModeToggle.addEventListener("change", updateModeVisibility);
 }
 
 if (frameRatePresetContainer && frameRateInput) {
@@ -176,24 +249,28 @@ if (frameRatePresetContainer && frameRateInput) {
   frameRateInput.addEventListener("input", syncPresetFromInput);
 }
 
-function handleFileSelection(files) {
-  storedFiles = Array.from(files);
-
-  if (!storedFiles.length) {
-    selectedFiles.textContent = "ファイルが選択されていません";
-    selectedFiles.classList.add("empty");
-    return;
+function syncModeVisibility() {
+  const useAuto = autoModeToggle?.checked ?? false;
+  if (modeInput) {
+    modeInput.value = useAuto ? "auto" : "manual";
   }
-
-  const list = storedFiles
-    .slice()
-    .sort((a, b) => a.name.localeCompare(b.name, "ja"))
-    .map((file) => `• ${file.webkitRelativePath || file.name}`)
-    .join("\n");
-
-  selectedFiles.textContent = list;
-  selectedFiles.classList.remove("empty");
+  manualSettings?.classList.toggle("hidden", useAuto);
+  autoSettings?.classList.toggle("hidden", !useAuto);
+  const manualInput = settingsForm?.elements["manualAdjustment"];
+  const autoInput = settingsForm?.elements["targetTotalTime"];
+  if (manualInput) {
+    manualInput.disabled = useAuto;
+  }
+  if (autoInput) {
+    autoInput.disabled = !useAuto;
+  }
+  document
+    .querySelectorAll(".auto-only")
+    .forEach((el) => (el.style.display = useAuto ? "flex" : "none"));
 }
+
+syncModeVisibility();
+autoModeToggle?.addEventListener("change", syncModeVisibility);
 
 folderInput?.addEventListener("change", (event) => {
   if (event.target.files?.length) {
@@ -213,9 +290,7 @@ fileInput?.addEventListener("change", (event) => {
   }
 });
 
-settingsForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
+async function runGeneration() {
   if (!storedFiles.length) {
     alert("先に音声とテキストのファイルを選択してください。");
     return;
@@ -234,8 +309,7 @@ settingsForm.addEventListener("submit", async (event) => {
     const targetTotalTime = parseFloat(settingsForm.elements["targetTotalTime"].value || "0");
     const frameLockEnabled = settingsForm.elements["enableFrameLock"]?.checked ?? false;
     const frameRateValue = parseFloat(settingsForm.elements["frameRate"]?.value || "0");
-    const trimFrameOverflow =
-      settingsForm.elements["trimFrameOverflow"]?.checked ?? false;
+    const trimFrameOverflow = settingsForm.elements["trimFrameOverflow"]?.checked ?? false;
 
     if (frameLockEnabled && !(frameRateValue > 0)) {
       alert("フレームレートには 0 より大きい数値を指定してください。");
@@ -255,11 +329,26 @@ settingsForm.addEventListener("submit", async (event) => {
     });
 
     showResults({ ...processingResult, warnings }, mode);
+    resultsSection.hidden = false;
+    autoRerunToggle.checked = autoRerunToggle.checked;
   } catch (error) {
     console.error(error);
     alert(`エラーが発生しました: ${error.message}`);
   }
+}
+
+settingsForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  runGeneration();
 });
+
+rerunButton?.addEventListener("click", () => {
+  scrollToFrameCard();
+  generateButton?.focus();
+});
+
+bindPickerButtons();
+bindDropZone();
 
 async function buildFilePairs(files) {
   const textFiles = new Map();
