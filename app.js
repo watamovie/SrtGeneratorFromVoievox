@@ -12,6 +12,7 @@ const selectFolderButton = document.getElementById("selectFolderButton");
 const jumpToUploadButton = document.getElementById("jumpToUpload");
 const reuploadFilesButton = document.getElementById("reuploadFilesButton");
 const regenerateButton = document.getElementById("regenerateButton");
+const logoLink = document.getElementById("logoLink");
 
 const selectedFiles = document.getElementById("selectedFiles");
 const settingsForm = document.getElementById("settingsForm");
@@ -41,8 +42,65 @@ let autoProcessOnSelection = false;
 let hasResults = false;
 const stepOrder = ["upload", "settings", "results"];
 
-selectedFiles.textContent = "ファイルが選択されていません";
-selectedFiles.classList.add("empty");
+const resetSelectionDisplay = () => {
+  if (!selectedFiles) return;
+  selectedFiles.textContent = "ファイルが選択されていません";
+  selectedFiles.classList.add("empty");
+};
+
+const renderSelectedFiles = (files) => {
+  if (!selectedFiles) return;
+
+  if (!files.length) {
+    resetSelectionDisplay();
+    return;
+  }
+
+  const counts = files.reduce(
+    (acc, file) => {
+      const extension = file.name.split(".").pop()?.toLowerCase();
+      if (extension === "wav") acc.audio += 1;
+      if (extension === "txt") acc.text += 1;
+      return acc;
+    },
+    { audio: 0, text: 0 }
+  );
+
+  const list = files
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, "ja"))
+    .map((file) => file.webkitRelativePath || file.name);
+
+  selectedFiles.classList.remove("empty");
+  selectedFiles.innerHTML = "";
+
+  const summary = document.createElement("div");
+  summary.className = "selection-summary";
+  summary.textContent = `${files.length}件を読み込みました`;
+
+  const sub = document.createElement("small");
+  sub.textContent = `音声 ${counts.audio} / テキスト ${counts.text} ・ ペア候補 ${Math.min(
+    counts.audio,
+    counts.text
+  )}`;
+  summary.appendChild(sub);
+
+  const note = document.createElement("p");
+  note.className = "selection-note muted";
+  note.textContent = "ファイル名順に並べて処理します。";
+
+  const listEl = document.createElement("ul");
+  listEl.className = "selected-file-list";
+  list.forEach((name) => {
+    const item = document.createElement("li");
+    item.textContent = name;
+    listEl.appendChild(item);
+  });
+
+  selectedFiles.append(summary, note, listEl);
+};
+
+resetSelectionDisplay();
 
 const focusUploadStep = () => {
   uploadStep?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -66,6 +124,18 @@ const updateStepIndicators = (step) => {
     button.classList.toggle("completed", index !== -1 && index < currentIndex);
     button.setAttribute("aria-current", isActive ? "step" : "false");
   });
+};
+
+const resetToLanding = () => {
+  storedFiles = [];
+  hasResults = false;
+  autoProcessOnSelection = false;
+  if (fileInput) fileInput.value = "";
+  if (folderInput) folderInput.value = "";
+  resetSelectionDisplay();
+  goToStep("upload", { scroll: false });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  highlightDropzone();
 };
 
 const goToStep = (step, { scroll = true } = {}) => {
@@ -98,6 +168,11 @@ workflowButtons.forEach((button) => {
       goToStep(target);
     }
   });
+});
+
+logoLink?.addEventListener("click", (event) => {
+  event.preventDefault();
+  resetToLanding();
 });
 
 updateStepIndicators("upload");
@@ -208,19 +283,11 @@ const handleFileSelection = (files) => {
   storedFiles = Array.from(files);
 
   if (!storedFiles.length) {
-    selectedFiles.textContent = "ファイルが選択されていません";
-    selectedFiles.classList.add("empty");
+    renderSelectedFiles([]);
     return;
   }
 
-  const list = storedFiles
-    .slice()
-    .sort((a, b) => a.name.localeCompare(b.name, "ja"))
-    .map((file) => `• ${file.webkitRelativePath || file.name}`)
-    .join("\n");
-
-  selectedFiles.textContent = list;
-  selectedFiles.classList.remove("empty");
+  renderSelectedFiles(storedFiles);
   hasResults = false;
   goToStep("settings");
 
