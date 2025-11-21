@@ -13,6 +13,17 @@
   font-family: "Inter", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 92px;
+}
+
+@media (max-width: 720px) {
+  html {
+    scroll-padding-top: 124px;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
