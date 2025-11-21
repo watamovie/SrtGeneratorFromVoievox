@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="app-header">
+    <header class="app-header" id="top">
       <h1>SRT字幕自動生成ツール</h1>
       <p class="lead">
         音声（.wav）とテキスト（.txt）のペアから、フレームに揃ったSRT字幕を生成します。
@@ -207,11 +207,102 @@
           </div>
         </div>
       </section>
+
+      <section class="card info-card" id="terms">
+        <div class="step-heading">
+          <p class="step-label">POLICY</p>
+          <h2>利用規約・プライバシーポリシー</h2>
+          <p class="hint">サービスをご利用いただく前に、以下の内容をご確認ください。</p>
+        </div>
+
+        <div class="policy-grid">
+          <div>
+            <h3>個人情報の利用目的</h3>
+            <p>
+              お問い合わせの際にお預かりする名前やメールアドレスなどの個人情報は、質問への回答や必要な情報をお知らせするためにのみ利用します。
+            </p>
+
+            <h3>個人情報の第三者への開示</h3>
+            <ul class="policy-list">
+              <li>法令等への協力のため、開示が必要となる場合を除き第三者に開示しません。</li>
+            </ul>
+
+            <h3>個人情報の開示・訂正・削除等</h3>
+            <p>
+              ご本人からのお申し出があった場合、本人確認の上、個人データの開示、訂正、追加、削除、利用停止に速やかに対応します。
+            </p>
+          </div>
+
+          <div>
+            <h3>アクセス解析ツールについて</h3>
+            <p>
+              本サイトは Google アナリティクスを利用し、Cookie を用いて匿名のトラフィックデータを収集します。ブラウザ設定で Cookie を無効にすると収集を拒否できます。
+            </p>
+
+            <h3>広告の配信について</h3>
+            <p>
+              第三者配信の広告サービス「Google Adsense」を利用する場合があります。興味に応じた広告表示のため Cookie が使用されることがあります。
+            </p>
+
+            <h3>免責事項</h3>
+            <p>
+              本サイトから移動した先で提供される情報・サービスについて責任を負いません。掲載内容には正確を期していますが、誤情報や情報の古さにより生じた損害について責任を負いかねます。
+            </p>
+
+            <h3>プライバシーポリシーの変更</h3>
+            <p>
+              関連法令を遵守し、内容を適宜見直して改善します。改定後の最新のポリシーは本ページで開示します。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card info-card" id="contact">
+        <div class="step-heading">
+          <p class="step-label">CONTACT</p>
+          <h2>お問い合わせ</h2>
+          <p class="hint">ツールに関するご質問や改善のご要望があれば、こちらからご連絡ください。</p>
+        </div>
+
+        <form id="contactForm" class="contact-form">
+          <label class="field">
+            <span>お名前</span>
+            <input type="text" name="name" autocomplete="name" required />
+          </label>
+
+          <label class="field">
+            <span>メールアドレス</span>
+            <input type="email" name="email" autocomplete="email" required />
+          </label>
+
+          <label class="field">
+            <span>お問い合わせ内容</span>
+            <textarea name="message" rows="4" required></textarea>
+          </label>
+
+          <label class="checkbox">
+            <input type="checkbox" name="agree" required />
+            <span>利用規約とプライバシーポリシーに同意します</span>
+          </label>
+
+          <div class="action-row">
+            <button type="submit" class="button button-primary">送信する</button>
+          </div>
+        </form>
+
+        <p id="contactSuccess" class="contact-success" hidden>
+          送信ありがとうございました。内容を確認の上、追ってご連絡いたします。
+        </p>
+      </section>
     </main>
 
     <footer class="app-footer">
       <p>
         同名の <code>.wav</code> と <code>.txt</code> ファイルをペアにして処理します。ファイル名は自動的に昇順で並び替えられます。
+      </p>
+      <p class="footer-links">
+        <a href="#terms">利用規約</a> ・ <a href="#contact">お問い合わせフォーム</a> ・
+        <a href="#top">Topへ戻る</a>
       </p>
     </footer>
 

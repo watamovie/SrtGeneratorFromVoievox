@@ -29,6 +29,8 @@ const frameRatePresetContainer = document.getElementById("frameRatePresets");
 const frameRateStatEl = document.getElementById("frameRateStat");
 const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
 const frameDriftEl = document.getElementById("frameDrift");
+const contactForm = document.getElementById("contactForm");
+const contactSuccess = document.getElementById("contactSuccess");
 
 const manualSettings = document.querySelector('.mode-settings[data-mode="manual"]');
 const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
@@ -295,6 +297,12 @@ reuploadFilesButton?.addEventListener("click", () => {
 
 regenerateButton?.addEventListener("click", () => {
   showSettingsStep();
+});
+
+contactForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  contactSuccess?.removeAttribute("hidden");
+  contactForm.reset();
 });
 
 settingsForm.addEventListener("submit", (event) => {
