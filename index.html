@@ -253,6 +253,39 @@
 
       <section class="card info-card" id="howto">
         <h2>使い方</h2>
+        <p class="hint">
+          VOICEVOXでの書き出しからSRT生成、動画編集ソフトへの取り込みまでの流れを図解で確認できます。
+        </p>
+        <div class="visual-guide" aria-label="SRT生成の流れ">
+          <p class="visual-title">図解：ファイルが字幕になるまで</p>
+          <div class="visual-flow">
+            <div class="visual-step">
+              <div class="visual-icon" aria-hidden="true">1</div>
+              <h3>VOICEVOXで書き出し</h3>
+              <p class="muted">
+                メニュー「ファイル」→「音声書き出し」を実行。設定で「txtファイルを書き出し」をオンにすると、<code>.wav</code> と
+                <code>.txt</code> が同じフォルダに並びます。
+              </p>
+              <div class="flow-badge">wav + txt</div>
+            </div>
+            <div class="visual-step">
+              <div class="visual-icon" aria-hidden="true">2</div>
+              <h3>本サイトにドラッグ</h3>
+              <p class="muted">
+                1クリックで複数ファイル／フォルダを追加。フレームレートと調整方法を選ぶだけで、タイミングを自動で整えます。
+              </p>
+              <div class="flow-badge">フレーム揃え &amp; 自動/手動調整</div>
+            </div>
+            <div class="visual-step">
+              <div class="visual-icon" aria-hidden="true">3</div>
+              <h3>SRTを動画に配置</h3>
+              <p class="muted">
+                ダウンロードした <code>output.srt</code> を編集ソフトに読み込み、wavクリップの上に重ねると字幕が同期します。
+              </p>
+              <div class="flow-badge">.srt をそのままタイムラインへ</div>
+            </div>
+          </div>
+        </div>
         <ol class="howto-list">
           <li>
             <strong>VOICEVOXの準備</strong>
