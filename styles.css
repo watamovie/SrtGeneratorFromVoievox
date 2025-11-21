@@ -451,6 +451,21 @@ input[type="number"]#frameRate {
   line-height: 1.6;
 }
 
+.howto-list {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: 0.35rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.howto-list strong {
+  display: block;
+  color: var(--text);
+  margin-bottom: 0.15rem;
+}
+
 .info-card a {
   color: var(--accent);
 }
