@@ -203,6 +203,53 @@ a {
   line-height: 1.6;
 }
 
+.workflow-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  padding: 0.5rem 0.25rem 0.25rem;
+  position: sticky;
+  top: 76px;
+  z-index: 5;
+  background: linear-gradient(180deg, rgba(249, 251, 248, 0.96), rgba(249, 251, 248, 0.82));
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 28px rgba(15, 48, 32, 0.08);
+}
+
+.workflow-pill {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+.workflow-pill:hover,
+.workflow-pill:focus-visible {
+  border-color: var(--accent-soft);
+  box-shadow: 0 8px 20px rgba(15, 48, 32, 0.08);
+  outline: none;
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.workflow-pill.active {
+  background: linear-gradient(135deg, rgba(31, 138, 85, 0.12), rgba(31, 138, 85, 0.04));
+  border-color: var(--accent-soft);
+  color: var(--text);
+  box-shadow: 0 10px 26px rgba(15, 48, 32, 0.12);
+}
+
+.workflow-pill.completed {
+  background: linear-gradient(135deg, rgba(31, 138, 85, 0.08), rgba(15, 48, 32, 0.02));
+  color: var(--accent-strong);
+}
+
 .pill {
   width: fit-content;
   padding: 0.25rem 0.8rem;
@@ -657,6 +704,19 @@ input[type="number"]#frameRate {
   color: var(--accent);
   font-size: 0.95rem;
   min-height: 1.2em;
+}
+
+.workflow-mode .hero,
+.workflow-mode .info-card {
+  display: none;
+}
+
+.workflow-mode .app-main {
+  width: min(840px, 92vw);
+}
+
+.workflow-mode .step-card:not([hidden]) {
+  box-shadow: 0 18px 40px rgba(15, 48, 32, 0.14);
 }
 
 .contact-form input,
