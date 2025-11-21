@@ -657,6 +657,20 @@ input[type="number"]#frameRate {
   gap: 0.75rem;
 }
 
+.info-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+@media (min-width: 760px) {
+  .info-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
 .info-card h3 {
   margin-bottom: 0;
 }
@@ -666,6 +680,73 @@ input[type="number"]#frameRate {
   padding-left: 1.25rem;
   color: var(--muted);
   line-height: 1.6;
+}
+
+.flow-diagram {
+  display: grid;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, rgba(31, 138, 85, 0.06), rgba(15, 48, 32, 0.05));
+  box-shadow: 0 12px 26px rgba(15, 48, 32, 0.08);
+}
+
+@media (min-width: 880px) {
+  .flow-diagram {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+.flow-step {
+  display: grid;
+  gap: 0.25rem;
+  align-items: center;
+  grid-template-columns: auto 1fr;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.75rem;
+  background: rgba(249, 251, 248, 0.8);
+  border: 1px solid rgba(31, 138, 85, 0.18);
+}
+
+.flow-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  border-radius: 0.65rem;
+  background: rgba(31, 138, 85, 0.12);
+  color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px rgba(31, 138, 85, 0.18);
+}
+
+.flow-title {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.flow-text {
+  margin: 0.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.flow-arrow {
+  text-align: center;
+  font-size: 1.4rem;
+  color: var(--accent-strong);
+  font-weight: 800;
+  display: none;
+}
+
+@media (min-width: 880px) {
+  .flow-arrow {
+    display: block;
+  }
 }
 
 .howto-list {
@@ -681,6 +762,33 @@ input[type="number"]#frameRate {
   display: block;
   color: var(--text);
   margin-bottom: 0.15rem;
+}
+
+.howto-hints {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 760px) {
+  .howto-hints {
+    grid-template-columns: 1.05fr 0.95fr;
+    align-items: stretch;
+  }
+}
+
+.hint-box {
+  padding: 0.9rem 1rem;
+  background: rgba(31, 138, 85, 0.08);
+  border: 1px solid rgba(31, 138, 85, 0.2);
+  border-radius: 0.85rem;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.hint-title {
+  margin: 0 0 0.35rem;
+  font-weight: 800;
+  color: var(--accent-strong);
 }
 
 .info-card a {

@@ -264,7 +264,54 @@
       </section>
 
       <section class="card info-card" id="howto">
-        <h2>使い方</h2>
+        <div class="info-header">
+          <div>
+            <p class="eyebrow">WORKFLOW</p>
+            <h2>使い方</h2>
+          </div>
+          <p class="hint">
+            3ステップで字幕が完成。準備から書き出しまでを図解しました。
+          </p>
+        </div>
+
+        <div
+          class="flow-diagram"
+          role="img"
+          aria-label="VOICEVOXでtxtを書き出し、wavとペアで本サイトに読み込み、SRTをダウンロードして動画編集ソフトに配置するまでの流れ"
+        >
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">🎤</div>
+            <div>
+              <p class="flow-title">VOICEVOX</p>
+              <p class="flow-text">オプションで「txtファイルを書き出し」をオンにし、台本を書き出します。</p>
+            </div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">💾</div>
+            <div>
+              <p class="flow-title">wav &amp; txt</p>
+              <p class="flow-text">wavと同じフォルダにtxtが並ぶように保存。ファイル名は揃えたままでOK。</p>
+            </div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">🌐</div>
+            <div>
+              <p class="flow-title">このサイト</p>
+              <p class="flow-text">ペアのファイルをまとめて読み込み、フレーム設定を選んでSRTを生成。</p>
+            </div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true">→</div>
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">🎬</div>
+            <div>
+              <p class="flow-title">動画編集ソフト</p>
+              <p class="flow-text">wavを並べたタイムラインにSRTを追加すれば、時間の合った字幕付き音声が完成。</p>
+            </div>
+          </div>
+        </div>
+
         <ol class="howto-list">
           <li>
             <strong>VOICEVOXの準備</strong>
@@ -291,7 +338,20 @@
             </p>
           </li>
         </ol>
-        <p class="hint">タイミング調整いらずで、数分でナレーション付き動画の字幕が整います。</p>
+
+        <div class="howto-hints">
+          <div>
+            <p class="hint">タイミング調整いらずで、数分でナレーション付き動画の字幕が整います。</p>
+          </div>
+          <div class="hint-box">
+            <p class="hint-title">スムーズに進めるためのチェックリスト</p>
+            <ul>
+              <li>ファイル名に全角数字・記号が混ざっていないか確認</li>
+              <li>1クリップ1行でtxtが書き出されているかを事前にプレビュー</li>
+              <li>動画編集ソフトと同じフレームレートを「STEP 2」で指定</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="card info-card" id="contact">
