@@ -31,16 +31,82 @@ a {
   color: inherit;
 }
 
-.app-header,
-.app-footer {
-  text-align: center;
-  padding: 2.5rem 1rem 2rem;
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: rgba(249, 251, 248, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 8px 20px rgba(15, 48, 32, 0.08);
 }
 
-.app-header {
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo .brand-mark {
+  width: 52px;
+  height: 52px;
+  padding: 0.45rem;
+  border-radius: 1rem;
+  box-shadow: 0 12px 24px rgba(15, 48, 32, 0.12);
+}
+
+.brand-text {
   display: grid;
-  gap: 0.75rem;
-  justify-items: center;
+  gap: 0.1rem;
+  font-size: 0.95rem;
+}
+
+.brand-text span {
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-weight: 700;
+  flex-wrap: wrap;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--muted);
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.65rem;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.nav-links a:hover,
+.nav-links a:focus-visible,
+.nav-links a.active {
+  color: var(--text);
+  background: rgba(31, 138, 85, 0.12);
+}
+
+.nav-cta {
+  white-space: nowrap;
+}
+
+.app-footer {
+  text-align: left;
+  padding: 2.5rem 1.25rem 2.75rem;
+  background: rgba(15, 48, 32, 0.02);
+  border-top: 1px solid var(--border);
 }
 
 .brand-mark {
@@ -80,7 +146,86 @@ a {
   margin: 0 auto;
   display: grid;
   gap: 1.5rem;
-  padding-bottom: 3.5rem;
+  padding: 1.5rem 0 3.5rem;
+}
+
+.hero {
+  background: linear-gradient(135deg, rgba(31, 138, 85, 0.08), rgba(15, 48, 32, 0.05)), var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.35rem;
+  padding: 2.4rem 1.8rem;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 1.25rem;
+}
+
+.hero-grid {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.hero-copy h1 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.hero-highlights {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.hero-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  padding: 1.4rem;
+  box-shadow: 0 10px 28px rgba(15, 48, 32, 0.1);
+  display: grid;
+  gap: 0.6rem;
+}
+
+.hero-card ol {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  display: grid;
+  gap: 0.35rem;
+  line-height: 1.6;
+}
+
+.pill {
+  width: fit-content;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(31, 138, 85, 0.12);
+  color: var(--accent-strong);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 800;
+  margin: 0;
+}
+
+@media (min-width: 900px) {
+  .hero-grid {
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: center;
+  }
 }
 
 .card {
@@ -531,13 +676,34 @@ input[type="number"]#frameRate {
   outline-offset: 2px;
 }
 
-.footer-nav {
+.footer-brand {
   display: flex;
-  gap: 0.5rem;
-  justify-content: center;
   align-items: center;
-  margin-top: 0.8rem;
-  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.footer-brand .brand-mark {
+  width: 60px;
+  height: 60px;
+  padding: 0.5rem;
+}
+
+.footer-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 880px) {
+  .footer-grid {
+    grid-template-columns: 1.15fr 0.9fr 0.9fr;
+    align-items: start;
+  }
+}
+
+.footer-nav {
+  display: grid;
+  gap: 0.45rem;
 }
 
 .footer-nav a {
@@ -549,6 +715,23 @@ input[type="number"]#frameRate {
 .footer-nav a:hover,
 .footer-nav a:focus-visible {
   color: var(--accent);
+}
+
+.footer-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.legal-main {
+  width: min(860px, 92vw);
+}
+
+.legal-card {
+  box-shadow: 0 12px 30px rgba(15, 48, 32, 0.08);
+}
+
+.legal-hero {
+  background: linear-gradient(135deg, rgba(15, 48, 32, 0.12), rgba(31, 138, 85, 0.12));
 }
 
 code {
