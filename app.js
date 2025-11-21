@@ -21,6 +21,11 @@ const frameRatePresetContainer = document.getElementById("frameRatePresets");
 const frameRateStatEl = document.getElementById("frameRateStat");
 const frameAlignedTotalEl = document.getElementById("frameAlignedTotal");
 const frameDriftEl = document.getElementById("frameDrift");
+const dropZone = document.getElementById("dropZone");
+const importStatus = document.getElementById("importStatus");
+const fileCountPill = document.getElementById("fileCountPill");
+const downloadLinkSecondary = document.getElementById("downloadLinkSecondary");
+const backToSettingsButton = document.getElementById("backToSettings");
 
 const manualSettings = document.querySelector('.mode-settings[data-mode="manual"]');
 const autoSettings = document.querySelector('.mode-settings[data-mode="auto"]');
@@ -31,6 +36,16 @@ let pickerMode = "folder";
 
 selectedFiles.textContent = "ファイルが選択されていません";
 selectedFiles.classList.add("empty");
+
+const syncStatus = (hasFiles) => {
+  if (!importStatus || !fileCountPill) return;
+  importStatus.textContent = hasFiles ? "インポート完了" : "インポート待ち";
+  importStatus.classList.toggle("status-active", hasFiles);
+  importStatus.classList.toggle("status-idle", !hasFiles);
+  fileCountPill.textContent = hasFiles ? `${storedFiles.length} 件` : "0 件";
+};
+
+syncStatus(false);
 
 if (frameToggle && frameRateOptionsEl && frameRateInput) {
   const syncFrameOptionsVisibility = () => {
@@ -182,6 +197,7 @@ function handleFileSelection(files) {
   if (!storedFiles.length) {
     selectedFiles.textContent = "ファイルが選択されていません";
     selectedFiles.classList.add("empty");
+    syncStatus(false);
     return;
   }
 
@@ -193,6 +209,7 @@ function handleFileSelection(files) {
 
   selectedFiles.textContent = list;
   selectedFiles.classList.remove("empty");
+  syncStatus(true);
 }
 
 folderInput?.addEventListener("change", (event) => {
@@ -212,6 +229,98 @@ fileInput?.addEventListener("change", (event) => {
     }
   }
 });
+
+async function readDirectoryEntry(entry) {
+  if (entry.isFile) {
+    return new Promise((resolve, reject) => {
+      entry.file((file) => resolve([file]), reject);
+    });
+  }
+
+  if (entry.isDirectory) {
+    const reader = entry.createReader();
+    const entries = [];
+    const readEntries = () =>
+      new Promise((resolve, reject) => {
+        reader.readEntries((items) => resolve(items), reject);
+      });
+
+    let batch = await readEntries();
+    while (batch.length) {
+      entries.push(...batch);
+      batch = await readEntries();
+    }
+
+    const childFiles = await Promise.all(entries.map((child) => readDirectoryEntry(child)));
+    return childFiles.flat();
+  }
+
+  return [];
+}
+
+async function extractFilesFromDataTransfer(dataTransfer) {
+  const items = dataTransfer?.items;
+  if (!items?.length) {
+    return Array.from(dataTransfer?.files ?? []);
+  }
+
+  const files = [];
+
+  for (const item of items) {
+    const entry = item.webkitGetAsEntry?.();
+    if (entry) {
+      const resolvedFiles = await readDirectoryEntry(entry);
+      files.push(...resolvedFiles);
+    } else {
+      const file = item.getAsFile();
+      if (file) {
+        files.push(file);
+      }
+    }
+  }
+
+  return files;
+}
+
+if (dropZone && openPickerButton) {
+  const setDragState = (active) => {
+    dropZone.classList.toggle("is-dragover", active);
+  };
+
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setDragState(true);
+    });
+  });
+
+  ["dragleave", "dragend"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, () => setDragState(false));
+  });
+
+  dropZone.addEventListener("drop", async (event) => {
+    event.preventDefault();
+    setDragState(false);
+    try {
+      const files = await extractFilesFromDataTransfer(event.dataTransfer);
+      if (files.length) {
+        handleFileSelection(files);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("ファイルの読み込み中にエラーが発生しました。");
+    }
+  });
+
+  dropZone.addEventListener("click", () => openPickerButton.click());
+  dropZone.addEventListener("keypress", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openPickerButton.click();
+    }
+  });
+}
 
 settingsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -510,6 +619,14 @@ function showResults(result, mode) {
   currentDownloadUrl = URL.createObjectURL(blob);
   downloadLink.href = currentDownloadUrl;
   downloadLink.download = "output.srt";
+  if (downloadLinkSecondary) {
+    downloadLinkSecondary.href = currentDownloadUrl;
+    downloadLinkSecondary.download = "output.srt";
+  }
 
   resultsSection.hidden = false;
 }
+
+backToSettingsButton?.addEventListener("click", () => {
+  settingsForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
