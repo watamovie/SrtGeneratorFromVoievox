@@ -19,8 +19,8 @@
         </div>
       </a>
       <nav class="nav-links" aria-label="主要ナビゲーション">
-        <a href="#uploadStep">使い方</a>
-        <a href="#howto">準備手順</a>
+        <a href="#howto">使い方</a>
+        <a href="#uploadStep">アップロード</a>
         <a href="#contact">サポート</a>
         <a href="terms.html">利用規約</a>
       </nav>
@@ -29,31 +29,99 @@
 
     <main class="app-main">
       <section class="hero" id="top">
-        <p class="eyebrow">VOICEVOX to SRT</p>
         <div class="hero-grid">
           <div class="hero-copy">
-            <h1>SRTジェネレーター</h1>
+            <p class="eyebrow">VOICEVOX to SRT</p>
+            <h1>音声と台本からフルカラーで字幕化</h1>
             <p class="lead">
-              字幕化したい音声（.wav）とテキスト（.txt）をまとめて読み込む事で、フレーム合わせや合計時間の微調整までブラウザだけで完結。１フレームもズレのないSRTファイルを作成することが可能です。
+              VOICEVOXの <code>.wav</code> と <code>.txt</code> をまとめてドロップするだけ。フレーム単位の揺らぎを抑えたSRTをブラウザ内だけで生成します。
             </p>
             <div class="hero-actions">
-              <a class="button button-primary" href="#uploadStep">SRTを作成する</a>
-              <a class="button button-ghost" href="terms.html">利用規約を読む</a>
+              <a class="button button-primary" href="#uploadStep">今すぐSRTを作る</a>
+              <a class="button button-ghost" href="#howto">セットアップを見る</a>
             </div>
             <ul class="hero-highlights">
-              <li>ブラウザ内完結・データは保存されません</li>
-              <li>フレームレートを選んで綺麗に揃うタイムコード</li>
-              <li>自動/手動のタイミング調整どちらにも対応</li>
+              <li>ブラウザ完結・データは保存されません</li>
+              <li>同名の <code>.wav</code> と <code>.txt</code> を自動でペアリング</li>
+              <li>フレームレートとタイミング調整を細かく指定可能</li>
             </ul>
           </div>
-          <div class="hero-card">
-            <p class="pill">STEPガイド</p>
-            <ol>
-              <li><span>ファイルまたはフォルダを選択</span></li>
-              <li><span>フレームレートを設定</span></li>
-              <li><span>生成された字幕ファイルをダウンロード</span></li>
-            </ol>
-            <p class="hint">ファイルを読み込む際はVOICEVOXの出力ファイル <code>.wav</code> と <code>.txt</code> を全て選択してください。</p>
+
+          <div class="upload-panel" id="uploadStep">
+            <div class="panel-header">
+              <div>
+                <p class="pill">すぐに始められます</p>
+                <h2>ファイル/フォルダをまとめて投入</h2>
+                <p class="hint">ドラッグ＆ドロップ、またはボタンから選択できます</p>
+              </div>
+              <div class="badge">安全なローカル処理</div>
+            </div>
+
+            <div
+              id="dropzone"
+              class="dropzone hero-dropzone"
+              role="button"
+              tabindex="0"
+              aria-label="ファイルまたはフォルダをドラッグ＆ドロップ、または選択"
+            >
+              <div class="drop-inner">
+                <p class="drop-title">ここにファイル/フォルダをドロップ</p>
+                <p class="muted">VOICEVOXで書き出した .wav と .txt をまとめて追加してください</p>
+                <div class="drop-actions">
+                  <button type="button" id="selectFilesButton" class="button button-primary">
+                    ファイルを選択
+                  </button>
+                  <button type="button" id="selectFolderButton" class="button button-secondary">
+                    フォルダを選択
+                  </button>
+                </div>
+                <div class="drop-meta">
+                  <span class="meta-item">wav</span>
+                  <span class="meta-sep">+</span>
+                  <span class="meta-item">txt</span>
+                  <span class="meta-note">同名ファイルを自動でマッチング</span>
+                </div>
+              </div>
+            </div>
+
+            <input id="fileInput" type="file" multiple accept=".wav,.txt" hidden />
+            <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
+
+            <div class="selection-header">
+              <p id="selectedSummary" class="muted">ファイルが選択されていません</p>
+              <button type="button" id="clearSelectionButton" class="button button-ghost button-small" hidden>
+                選択をクリア
+              </button>
+            </div>
+            <div id="selectedFiles" class="selected-files empty" aria-live="polite">
+              ファイルが選択されていません
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="preview-section" aria-label="生成イメージ">
+        <h2>生成後のイメージ</h2>
+        <p class="hint">フレームレートや調整値を設定すると、すぐにプレビューが表示されます。</p>
+        <div class="preview-grid">
+          <div class="preview-card">
+            <p class="label">SRT TIMECODE</p>
+            <div class="preview-bars">
+              <span class="bar" style="width: 42%"></span>
+              <span class="bar" style="width: 36%"></span>
+              <span class="bar" style="width: 58%"></span>
+              <span class="bar" style="width: 34%"></span>
+              <span class="bar" style="width: 68%"></span>
+            </div>
+          </div>
+          <div class="preview-card">
+            <p class="label">フレーム揃え</p>
+            <div class="preview-bars staggered">
+              <span class="bar" style="width: 48%"></span>
+              <span class="bar" style="width: 52%"></span>
+              <span class="bar" style="width: 44%"></span>
+              <span class="bar" style="width: 70%"></span>
+            </div>
           </div>
         </div>
       </section>
@@ -69,51 +137,6 @@
           3. ダウンロード
         </button>
       </nav>
-
-      <section class="card step-card" id="uploadStep">
-        <div class="step-heading">
-          <p class="step-label">STEP 1</p>
-          <h2>ファイルを読み込む</h2>
-          <p class="hint">
-            フォルダごとでもファイルでも選択できます。ドラッグ＆ドロップにも対応しています。
-          </p>
-        </div>
-
-        <div
-          id="dropzone"
-          class="dropzone"
-          role="button"
-          tabindex="0"
-          aria-label="ファイルまたはフォルダをドラッグ＆ドロップ、または選択"
-        >
-          <div class="drop-inner">
-            <p class="drop-title">ここにファイル/フォルダをドロップ</p>
-            <p class="muted">ドラッグ＆ドロップ、または下のボタンからまとめて選択できます。</p>
-            <div class="drop-actions">
-              <button type="button" id="selectFilesButton" class="button button-primary">
-                ファイルを選択
-              </button>
-              <button type="button" id="selectFolderButton" class="button button-secondary">
-                フォルダを選択
-              </button>
-            </div>
-            <p class="hint">同名の .wav と .txt をセットで読み込み、ブラウザ内のみで処理します。</p>
-          </div>
-        </div>
-
-        <input id="fileInput" type="file" multiple accept=".wav,.txt" hidden />
-        <input id="folderInput" type="file" webkitdirectory directory multiple hidden />
-
-        <div class="selection-header">
-          <p id="selectedSummary" class="muted">ファイルが選択されていません</p>
-          <button type="button" id="clearSelectionButton" class="button button-ghost button-small" hidden>
-            選択をクリア
-          </button>
-        </div>
-        <div id="selectedFiles" class="selected-files empty" aria-live="polite">
-          ファイルが選択されていません
-        </div>
-      </section>
 
       <section class="card step-card" id="settingsStep" hidden>
         <div class="step-heading">
